@@ -1,0 +1,11 @@
+API/node_modules
+API/dist
+API/.env
+API/.env.*
+WEB/node_modules
+WEB/.next
+WEB/out
+WEB/.env.local
+WEB/.env.*
+WEB/.git.nested-backup
+*.log
