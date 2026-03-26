@@ -7,5 +7,4 @@ WEB/.next
 WEB/out
 WEB/.env.local
 WEB/.env.*
-WEB/.git.nested-backup
 *.log
