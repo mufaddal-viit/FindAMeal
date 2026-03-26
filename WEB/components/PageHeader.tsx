@@ -11,14 +11,13 @@ export default function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-800">
+      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-leaf">
         {eyebrow}
       </p>
-      <h1 className="max-w-3xl text-4xl font-semibold text-slate-950 md:text-5xl">
+      <h1 className="max-w-3xl text-4xl font-semibold text-ink md:text-5xl">
         {title}
       </h1>
-      <p className="max-w-2xl text-base leading-7 text-slate-700">{description}</p>
+      <p className="max-w-2xl text-base leading-7 text-leaf/80">{description}</p>
     </div>
   );
 }
-

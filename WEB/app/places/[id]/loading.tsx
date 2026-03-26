@@ -1,8 +1,7 @@
 export default function PlaceLoading() {
   return (
-    <div className="rounded-[2rem] bg-white/80 p-6 text-sm font-medium text-slate-600 shadow-sm">
+    <div className="rounded-[2rem] border border-leaf/10 bg-paper p-6 text-sm font-medium text-leaf shadow-sm shadow-leaf/10">
       Loading place details...
     </div>
   );
 }
-

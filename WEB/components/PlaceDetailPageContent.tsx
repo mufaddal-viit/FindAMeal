@@ -17,20 +17,23 @@ export default function PlaceDetailPageContent({
   return (
     <main className="space-y-8 py-10">
       <div className="flex items-center justify-between gap-4">
-        <Link href="/results?q=UAE" className="text-sm font-semibold text-emerald-900">
+        <Link
+          href="/results?q=UAE"
+          className="text-sm font-semibold text-leaf transition hover:text-ink"
+        >
           Back to results
         </Link>
         {source ? (
-          <p className="text-sm text-slate-500">
-            Data source: <span className="font-semibold text-slate-700">{source}</span>
+          <p className="text-sm text-leaf/70">
+            Data source: <span className="font-semibold text-ink">{source}</span>
           </p>
         ) : null}
       </div>
 
       {loading ? (
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="h-[420px] animate-pulse rounded-[2rem] bg-white/70" />
-          <div className="h-[420px] animate-pulse rounded-[2rem] bg-white/70" />
+          <div className="h-[420px] animate-pulse rounded-[2rem] border border-leaf/10 bg-paper" />
+          <div className="h-[420px] animate-pulse rounded-[2rem] border border-leaf/10 bg-paper" />
         </div>
       ) : null}
 

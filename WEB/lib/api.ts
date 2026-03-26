@@ -1,4 +1,5 @@
 import axios from "axios";
+import { normalizeSearchQuery, validateSearchQuery } from "@/lib/searchQuery";
 import type { PlaceResponse, PlacesResponse } from "@/types/place";
 
 export const api = axios.create({
@@ -7,8 +8,15 @@ export const api = axios.create({
 });
 
 export async function fetchPlaces(query?: string, signal?: AbortSignal) {
+  const normalizedQuery = normalizeSearchQuery(query ?? "");
+  const validation = validateSearchQuery(normalizedQuery);
+
+  if (validation.error) {
+    throw new Error(validation.error);
+  }
+
   const response = await api.get<PlacesResponse>("/places", {
-    params: query ? { q: query } : undefined,
+    params: normalizedQuery ? { q: normalizedQuery } : undefined,
     signal
   });
 
@@ -34,4 +42,3 @@ export function getApiErrorMessage(error: unknown) {
 
   return "Something went wrong while talking to the API.";
 }
-
