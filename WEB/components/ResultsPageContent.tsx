@@ -1,42 +1,45 @@
-"use client";
-
 import Link from "next/link";
 import EmptyState from "@/components/EmptyState";
 import PageHeader from "@/components/PageHeader";
 import PlaceCard from "@/components/PlaceCard";
 import SearchForm from "@/components/SearchForm";
-import { usePlaces } from "@/hooks/usePlaces";
 import type {
   SearchCategory,
   SearchSortValue
 } from "@/lib/searchFormOptions";
+import type { Place, PlacesResponseMeta, PriceLevel } from "@/types/place";
 
 interface ResultsPageContentProps {
+  places: Place[];
+  meta: PlacesResponseMeta | null;
+  error?: string | null;
   query: string;
   location?: string;
   category?: SearchCategory;
   sort?: SearchSortValue;
+  radiusKm?: number;
+  minRating?: number;
+  priceLevels?: PriceLevel[];
+  openNow?: boolean;
   latitude?: number;
   longitude?: number;
 }
 
 export default function ResultsPageContent({
+  places,
+  meta,
+  error = null,
   query,
   location = "",
   category = "All",
   sort = "rating",
+  radiusKm,
+  minRating,
+  priceLevels = [],
+  openNow = false,
   latitude,
   longitude
 }: ResultsPageContentProps) {
-  const { places, loading, error, meta } = usePlaces({
-    query,
-    location,
-    category,
-    sort,
-    lat: latitude,
-    lng: longitude
-  });
-
   return (
     <main className="space-y-8 py-10">
       <section className="space-y-6 rounded-[2.5rem] border border-leaf/10 bg-paper p-8 shadow-lg shadow-leaf/10">
@@ -50,6 +53,10 @@ export default function ResultsPageContent({
           initialLocation={location}
           initialCategory={category}
           initialSort={sort}
+          initialRadiusKm={radiusKm}
+          initialMinRating={minRating}
+          initialPriceLevels={priceLevels}
+          initialOpenNow={openNow}
           initialLatitude={latitude}
           initialLongitude={longitude}
           compact
@@ -73,8 +80,8 @@ export default function ResultsPageContent({
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-leaf/80">
-            {loading
-              ? "Loading places..."
+            {error
+              ? "Results unavailable"
               : `${meta?.total ?? places.length} place(s) found`}
           </p>
           <Link
@@ -85,18 +92,7 @@ export default function ResultsPageContent({
           </Link>
         </div>
 
-        {loading ? (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-[420px] animate-pulse rounded-[2rem] border border-leaf/10 bg-paper shadow-sm shadow-leaf/10"
-              />
-            ))}
-          </div>
-        ) : null}
-
-        {!loading && !error && places.length > 0 ? (
+        {!error && places.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {places.map((place) => (
               <PlaceCard
@@ -109,14 +105,14 @@ export default function ResultsPageContent({
         ) : null}
       </section>
 
-      {!loading && error ? (
+      {error ? (
         <EmptyState
           title="Could not load places"
-          description={`${error} Make sure the API server is running on the expected URL.`}
+          description={error}
         />
       ) : null}
 
-      {!loading && !error && places.length === 0 ? (
+      {!error && places.length === 0 ? (
         <EmptyState
           title="No places found"
           description="Try a broader city, a different category, or adjust the current location and sort selection."

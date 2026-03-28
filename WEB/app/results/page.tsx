@@ -1,13 +1,10 @@
 import ResultsPageContent from "@/components/ResultsPageContent";
+import { fetchPlaces, getApiErrorMessage } from "@/lib/api";
 import {
-  normalizeLocationInput,
-  parseCoordinateParam
-} from "@/lib/locationQuery";
-import {
-  isSearchCategory,
-  isSearchSortValue
-} from "@/lib/searchFormOptions";
-import { sanitizeSearchQueryInput } from "@/lib/searchQuery";
+  parseFiltersFromSearchParams,
+  toPlaceListFilters
+} from "@/lib/placeFilterParams";
+import type { Place, PlacesResponseMeta } from "@/types/place";
 
 interface ResultsPageProps {
   searchParams: Promise<{
@@ -17,42 +14,48 @@ interface ResultsPageProps {
     sort?: string | string[];
     lat?: string | string[];
     lng?: string | string[];
+    radiusKm?: string | string[];
+    minRating?: string | string[];
+    priceLevels?: string | string[];
+    openNow?: string | string[];
+    page?: string | string[];
+    pageSize?: string | string[];
   }>;
 }
 
 export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   const resolvedSearchParams = await searchParams;
-  const queryParam = resolvedSearchParams.q;
-  const locationParam = resolvedSearchParams.location;
-  const categoryParam = resolvedSearchParams.category;
-  const sortParam = resolvedSearchParams.sort;
-  const latitude = parseCoordinateParam(resolvedSearchParams.lat, -90, 90);
-  const longitude = parseCoordinateParam(resolvedSearchParams.lng, -180, 180);
-  const query = sanitizeSearchQueryInput(
-    Array.isArray(queryParam) ? (queryParam[0] ?? "") : (queryParam ?? "")
-  );
-  const location = normalizeLocationInput(
-    Array.isArray(locationParam)
-      ? (locationParam[0] ?? "")
-      : (locationParam ?? "")
-  );
-  const categoryValue = Array.isArray(categoryParam)
-    ? (categoryParam[0] ?? "")
-    : (categoryParam ?? "");
-  const sortValue = Array.isArray(sortParam)
-    ? (sortParam[0] ?? "")
-    : (sortParam ?? "");
-  const category = isSearchCategory(categoryValue) ? categoryValue : "All";
-  const sort = isSearchSortValue(sortValue) ? sortValue : "rating";
+  const { values, error: filterError } =
+    parseFiltersFromSearchParams(resolvedSearchParams);
+  let places: Place[] = [];
+  let meta: PlacesResponseMeta | null = null;
+  let error = filterError;
+
+  if (!error) {
+    try {
+      const response = await fetchPlaces(toPlaceListFilters(values));
+      places = response.data;
+      meta = response.meta;
+    } catch (requestError) {
+      error = getApiErrorMessage(requestError);
+    }
+  }
 
   return (
     <ResultsPageContent
-      query={query}
-      location={location}
-      category={category}
-      sort={sort}
-      latitude={latitude}
-      longitude={longitude}
+      query={values.query}
+      location={values.location}
+      category={values.category}
+      sort={values.sort}
+      radiusKm={values.radiusKm}
+      minRating={values.minRating}
+      priceLevels={values.priceLevels}
+      openNow={values.openNow}
+      latitude={values.latitude}
+      longitude={values.longitude}
+      places={places}
+      meta={meta}
+      error={error}
     />
   );
 }

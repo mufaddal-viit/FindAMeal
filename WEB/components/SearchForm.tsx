@@ -2,27 +2,23 @@
 
 import dynamic from "next/dynamic";
 import type { ChangeEvent, FormEvent } from "react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { LocationPickerResult } from "@/components/LocationPicker";
+import SearchFiltersDropdown from "@/components/SearchFiltersDropdown";
+import { usePlaceFilters } from "@/hooks/usePlaceFilters";
 import {
   LOCATION_MAX_LENGTH,
   normalizeLocationInput,
   sanitizeLocationInput,
   type SearchCoordinates
 } from "@/lib/locationQuery";
-import {
-  SEARCH_CATEGORIES,
-  SEARCH_SORT_OPTIONS,
-  type SearchCategory,
-  type SearchSortValue,
-  isSearchCategory,
-  isSearchSortValue
-} from "@/lib/searchFormOptions";
+import { buildResultsSearchParams } from "@/lib/placeFilterParams";
 import {
   SEARCH_QUERY_MAX_LENGTH,
   sanitizeSearchQueryInput,
   validateSearchQuery
 } from "@/lib/searchQuery";
+import type { PriceLevel } from "@/types/place";
 
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
   ssr: false,
@@ -43,6 +39,10 @@ interface SearchFormProps {
   initialLocation?: string;
   initialCategory?: string;
   initialSort?: string;
+  initialRadiusKm?: number;
+  initialMinRating?: number;
+  initialPriceLevels?: PriceLevel[];
+  initialOpenNow?: boolean;
   initialLatitude?: number;
   initialLongitude?: number;
   compact?: boolean;
@@ -89,12 +89,17 @@ export default function SearchForm({
   initialLocation = "",
   initialCategory = "All",
   initialSort = "rating",
+  initialRadiusKm,
+  initialMinRating,
+  initialPriceLevels,
+  initialOpenNow = false,
   initialLatitude,
   initialLongitude,
   compact = false
 }: SearchFormProps) {
   const helpTextId = useId();
   const errorTextId = useId();
+  const filtersDropdownRef = useRef<HTMLDivElement | null>(null);
   const initialSanitizedValue = sanitizeSearchQueryInput(initialValue);
   const resolvedInitialCoordinates: SearchCoordinates | null =
     typeof initialLatitude === "number" && typeof initialLongitude === "number"
@@ -119,13 +124,58 @@ export default function SearchForm({
     initialMapSelection
   );
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<SearchCategory>(
-    isSearchCategory(initialCategory) ? initialCategory : "All"
-  );
-  const [sortBy, setSortBy] = useState<SearchSortValue>(
-    isSearchSortValue(initialSort) ? initialSort : "rating"
-  );
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const {
+    category,
+    setCategory,
+    sort,
+    setSort,
+    radiusKm,
+    setRadiusKm,
+    minRating,
+    setMinRating,
+    priceLevels,
+    togglePriceLevel,
+    openNow,
+    setOpenNow,
+    activeFilterCount,
+    resetFilters
+  } = usePlaceFilters({
+    initialCategory,
+    initialSort,
+    initialRadiusKm,
+    initialMinRating,
+    initialPriceLevels,
+    initialOpenNow
+  });
   const effectiveCoordinates = mapSelection?.coordinates ?? null;
+  const hasCoordinates = Boolean(effectiveCoordinates);
+
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsLocationPickerOpen(false);
+        setIsFiltersOpen(false);
+      }
+    };
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        isFiltersOpen &&
+        filtersDropdownRef.current &&
+        !filtersDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsFiltersOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscapeKey);
+    window.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscapeKey);
+      window.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isFiltersOpen]);
 
   useEffect(() => {
     if (!isLocationPickerOpen) {
@@ -133,18 +183,11 @@ export default function SearchForm({
     }
 
     const originalOverflow = document.body.style.overflow;
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsLocationPickerOpen(false);
-      }
-    };
 
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleEscapeKey);
 
     return () => {
       document.body.style.overflow = originalOverflow;
-      window.removeEventListener("keydown", handleEscapeKey);
     };
   }, [isLocationPickerOpen]);
 
@@ -165,6 +208,7 @@ export default function SearchForm({
 
   function handleLocationChange(event: ChangeEvent<HTMLInputElement>) {
     setMapSelection(null);
+    setRadiusKm(undefined);
     setLocation(sanitizeLocationInput(event.target.value));
   }
 
@@ -181,8 +225,9 @@ export default function SearchForm({
       address: result.address
     });
     setLocation(result.address);
-    setSortBy("distance");
+    setSort("distance");
     setIsLocationPickerOpen(false);
+    setIsFiltersOpen(false);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -199,28 +244,20 @@ export default function SearchForm({
       return;
     }
 
-    const params = new URLSearchParams();
-
-    if (validation.normalized) {
-      params.set("q", validation.normalized);
-    }
-
-    if (normalizedLocation) {
-      params.set("location", normalizedLocation);
-    }
-
-    if (effectiveCoordinates) {
-      params.set("lat", effectiveCoordinates.latitude.toString());
-      params.set("lng", effectiveCoordinates.longitude.toString());
-    }
-
-    if (selectedCategory !== "All") {
-      params.set("category", selectedCategory);
-    }
-
-    if (sortBy !== "rating") {
-      params.set("sort", sortBy);
-    }
+    const params = buildResultsSearchParams({
+      query: validation.normalized,
+      location: normalizedLocation,
+      category,
+      sort,
+      latitude: effectiveCoordinates?.latitude,
+      longitude: effectiveCoordinates?.longitude,
+      radiusKm,
+      minRating,
+      priceLevels,
+      openNow,
+      page: 1,
+      pageSize: 20
+    });
 
     const destination = params.toString()
       ? `/results?${params.toString()}`
@@ -280,73 +317,77 @@ export default function SearchForm({
           type="submit"
           className="h-16 rounded-[1.4rem] bg-leaf px-7 text-base font-semibold text-paper transition hover:bg-ink disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Search
+          Find meals
         </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 px-1">
         <button
           type="button"
-          onClick={() => setIsLocationPickerOpen(true)}
+          onClick={() => {
+            setIsFiltersOpen(false);
+            setIsLocationPickerOpen(true);
+          }}
           aria-label="Open location picker"
           className="rounded-full border border-leaf/15 bg-sand px-4 py-2 text-sm font-medium text-leaf transition hover:border-leaf hover:bg-paper"
         >
           Choose location
         </button>
+        <div ref={filtersDropdownRef} className="relative">
+          <button
+            type="button"
+            aria-label="Open advanced filters"
+            aria-expanded={isFiltersOpen}
+            aria-controls="search-filters-dropdown"
+            onClick={() => setIsFiltersOpen((current) => !current)}
+            className="inline-flex items-center gap-2 rounded-full border border-leaf/15 bg-sand px-4 py-2 text-sm font-medium text-leaf transition hover:border-leaf hover:bg-paper"
+          >
+            <span>Filters</span>
+            {activeFilterCount > 0 ? (
+              <span className="rounded-full bg-leaf px-2 py-0.5 text-xs font-semibold text-paper">
+                {activeFilterCount}
+              </span>
+            ) : null}
+          </button>
+
+          {isFiltersOpen ? (
+            <div
+              id="search-filters-dropdown"
+              className="absolute left-0 top-[calc(100%+0.75rem)] z-20 w-[min(100vw-2rem,56rem)]"
+            >
+              <SearchFiltersDropdown
+                category={category}
+                sort={sort}
+                radiusKm={radiusKm}
+                minRating={minRating}
+                priceLevels={priceLevels}
+                openNow={openNow}
+                hasCoordinates={hasCoordinates}
+                activeFilterCount={activeFilterCount}
+                onCategoryChange={setCategory}
+                onSortChange={setSort}
+                onRadiusChange={setRadiusKm}
+                onMinRatingChange={setMinRating}
+                onTogglePriceLevel={togglePriceLevel}
+                onOpenNowChange={setOpenNow}
+                onReset={resetFilters}
+              />
+            </div>
+          ) : null}
+        </div>
+
         {mapSelection ? (
           <p className="text-xs text-leaf/80">
             Selected location: {mapSelection.address}
           </p>
-        ) : null}
+        ) : location ? (
+          <p className="text-xs text-leaf/80">Location: {location}</p>
+        ) : (
+          <p className="text-xs text-leaf/70">
+            Add a location to unlock map-based distance filters.
+          </p>
+        )}
       </div>
-
-      <div className="flex flex-wrap gap-3">
-        {SEARCH_CATEGORIES.map((category) => {
-          const active = selectedCategory === category;
-
-          return (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setSelectedCategory(category)}
-              className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
-                active
-                  ? "border-leaf bg-leaf text-paper"
-                  : "border-leaf/15 bg-sand text-leaf hover:border-leaf hover:bg-paper"
-              }`}
-            >
-              {category}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div className="hidden lg:block" />
-        <label className="flex items-center gap-3 rounded-[1.4rem] border border-leaf/10 bg-sand px-5 py-4 transition focus-within:border-leaf lg:min-w-[360px]">
-          <span className="text-sm font-medium text-leaf/80">Sort by</span>
-          <select
-            name="sort"
-            value={sortBy}
-            onChange={(event) =>
-              setSortBy(
-                isSearchSortValue(event.target.value)
-                  ? event.target.value
-                  : "rating"
-              )
-            }
-            className="w-full bg-transparent text-base font-medium text-ink outline-none"
-          >
-            {SEARCH_SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <input type="hidden" name="category" value={selectedCategory} />
 
       <div className="flex flex-col gap-1 px-2">
         <p id={helpTextId} className="text-xs text-leaf/70">
