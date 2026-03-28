@@ -1,22 +1,16 @@
 import type { Request, Response } from "express";
 import { getPlaceById, getPlaces } from "../services/placeService";
 import { HttpError } from "../utils/httpError";
-import { validateSearchQuery } from "../utils/searchQuery";
+import { parsePlaceFilters } from "../utils/placeFilters";
 
 export async function listPlacesController(req: Request, res: Response) {
-  if (Array.isArray(req.query.q)) {
-    throw new HttpError(400, "Only one search query value is allowed.");
-  }
-
-  const rawQuery = typeof req.query.q === "string" ? req.query.q : "";
-  const query = validateSearchQuery(rawQuery);
-  const result = await getPlaces(query);
+  const filters = parsePlaceFilters(req.query);
+  const result = await getPlaces(filters);
 
   res.status(200).json({
     data: result.data,
     meta: {
-      query,
-      total: result.data.length,
+      ...result.meta,
       source: result.source
     }
   });

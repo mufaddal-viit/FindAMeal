@@ -6,7 +6,6 @@ import PageHeader from "@/components/PageHeader";
 import PlaceCard from "@/components/PlaceCard";
 import SearchForm from "@/components/SearchForm";
 import { usePlaces } from "@/hooks/usePlaces";
-import { buildPlaceResults } from "@/lib/placeResults";
 import type {
   SearchCategory,
   SearchSortValue
@@ -29,19 +28,13 @@ export default function ResultsPageContent({
   latitude,
   longitude
 }: ResultsPageContentProps) {
-  const { places, loading, error, source } = usePlaces(query);
-  const { places: visiblePlaces, effectiveSort } = buildPlaceResults({
-    places,
+  const { places, loading, error, meta } = usePlaces({
+    query,
     location,
     category,
     sort,
-    userCoordinates:
-      typeof latitude === "number" && typeof longitude === "number"
-        ? {
-            latitude,
-            longitude
-          }
-        : null
+    lat: latitude,
+    lng: longitude
   });
 
   return (
@@ -61,13 +54,13 @@ export default function ResultsPageContent({
           initialLongitude={longitude}
           compact
         />
-        {source ? (
+        {meta ? (
           <div className="space-y-1">
             <p className="text-sm text-leaf/70">
               Data source:{" "}
-              <span className="font-semibold text-ink">{source}</span>
+              <span className="font-semibold text-ink">{meta.source}</span>
             </p>
-            {sort === "distance" && effectiveSort !== "distance" ? (
+            {sort === "distance" && meta.effectiveSort !== "distance" ? (
               <p className="text-sm text-leaf/70">
                 Distance sorting needs your current location. Showing top-rated
                 places instead.
@@ -82,7 +75,7 @@ export default function ResultsPageContent({
           <p className="text-sm text-leaf/80">
             {loading
               ? "Loading places..."
-              : `${visiblePlaces.length} place(s) found`}
+              : `${meta?.total ?? places.length} place(s) found`}
           </p>
           <Link
             href="/"
@@ -103,9 +96,9 @@ export default function ResultsPageContent({
           </div>
         ) : null}
 
-        {!loading && !error && visiblePlaces.length > 0 ? (
+        {!loading && !error && places.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {visiblePlaces.map((place) => (
+            {places.map((place) => (
               <PlaceCard
                 key={place.id}
                 place={place}
@@ -123,7 +116,7 @@ export default function ResultsPageContent({
         />
       ) : null}
 
-      {!loading && !error && visiblePlaces.length === 0 ? (
+      {!loading && !error && places.length === 0 ? (
         <EmptyState
           title="No places found"
           description="Try a broader city, a different category, or adjust the current location and sort selection."

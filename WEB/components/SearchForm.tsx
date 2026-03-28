@@ -3,10 +3,8 @@
 import dynamic from "next/dynamic";
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useId, useState } from "react";
-import { useCurrentLocation } from "@/hooks/useCurrentLocation";
 import type { LocationPickerResult } from "@/components/LocationPicker";
 import {
-  CURRENT_LOCATION_LABEL,
   LOCATION_MAX_LENGTH,
   normalizeLocationInput,
   sanitizeLocationInput,
@@ -105,22 +103,15 @@ export default function SearchForm({
           longitude: initialLongitude
         }
       : null;
-  const initialCurrentLocationCoordinates =
-    initialLocation === CURRENT_LOCATION_LABEL ? resolvedInitialCoordinates : null;
   const initialMapSelection =
-    resolvedInitialCoordinates && initialLocation && initialLocation !== CURRENT_LOCATION_LABEL
+    resolvedInitialCoordinates && initialLocation
       ? {
           coordinates: resolvedInitialCoordinates,
           address: initialLocation
         }
       : null;
   const [query, setQuery] = useState(initialSanitizedValue);
-  const [location, setLocation] = useState(
-    sanitizeLocationInput(
-      initialLocation ||
-        (initialCurrentLocationCoordinates ? CURRENT_LOCATION_LABEL : "")
-    )
-  );
+  const [location, setLocation] = useState(sanitizeLocationInput(initialLocation));
   const [error, setError] = useState<string | null>(
     validateSearchQuery(initialSanitizedValue).error
   );
@@ -134,15 +125,7 @@ export default function SearchForm({
   const [sortBy, setSortBy] = useState<SearchSortValue>(
     isSearchSortValue(initialSort) ? initialSort : "rating"
   );
-  const {
-    coordinates,
-    isLocating,
-    error: currentLocationError,
-    hasCurrentLocation,
-    requestCurrentLocation,
-    clearCurrentLocation
-  } = useCurrentLocation(initialCurrentLocationCoordinates);
-  const effectiveCoordinates = mapSelection?.coordinates ?? coordinates;
+  const effectiveCoordinates = mapSelection?.coordinates ?? null;
 
   useEffect(() => {
     if (!isLocationPickerOpen) {
@@ -181,7 +164,6 @@ export default function SearchForm({
   }
 
   function handleLocationChange(event: ChangeEvent<HTMLInputElement>) {
-    clearCurrentLocation();
     setMapSelection(null);
     setLocation(sanitizeLocationInput(event.target.value));
   }
@@ -190,20 +172,7 @@ export default function SearchForm({
     setLocation(normalizeLocationInput(location));
   }
 
-  async function handleUseCurrentLocation() {
-    const nextCoordinates = await requestCurrentLocation();
-
-    if (!nextCoordinates) {
-      return;
-    }
-
-    setMapSelection(null);
-    setLocation(CURRENT_LOCATION_LABEL);
-    setSortBy("distance");
-  }
-
   function handleLocationPickerConfirm(result: LocationPickerResult) {
-    clearCurrentLocation();
     setMapSelection({
       coordinates: {
         latitude: result.lat,
@@ -241,7 +210,6 @@ export default function SearchForm({
     }
 
     if (effectiveCoordinates) {
-      params.set("location", normalizedLocation || CURRENT_LOCATION_LABEL);
       params.set("lat", effectiveCoordinates.latitude.toString());
       params.set("lng", effectiveCoordinates.longitude.toString());
     }
@@ -319,29 +287,15 @@ export default function SearchForm({
       <div className="flex flex-wrap items-center gap-3 px-1">
         <button
           type="button"
-          onClick={() => void handleUseCurrentLocation()}
-          disabled={isLocating}
-          aria-label="Use current location"
-          className="rounded-full border border-leaf/15 bg-sand px-4 py-2 text-sm font-medium text-leaf transition hover:border-leaf hover:bg-paper disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isLocating ? "Detecting location..." : "Use current location"}
-        </button>
-        <button
-          type="button"
           onClick={() => setIsLocationPickerOpen(true)}
           aria-label="Open location picker"
           className="rounded-full border border-leaf/15 bg-sand px-4 py-2 text-sm font-medium text-leaf transition hover:border-leaf hover:bg-paper"
         >
-          Pick on map
+          Choose location
         </button>
-        {hasCurrentLocation && coordinates ? (
-          <p className="text-xs text-leaf/80">
-            Using {coordinates.latitude}, {coordinates.longitude}
-          </p>
-        ) : null}
         {mapSelection ? (
           <p className="text-xs text-leaf/80">
-            Map pin ready: {mapSelection.address}
+            Selected location: {mapSelection.address}
           </p>
         ) : null}
       </div>
@@ -406,11 +360,6 @@ export default function SearchForm({
             className="text-xs font-medium text-amber"
           >
             {error}
-          </p>
-        ) : null}
-        {currentLocationError ? (
-          <p role="alert" className="text-xs font-medium text-amber">
-            {currentLocationError}
           </p>
         ) : null}
       </div>

@@ -12,6 +12,7 @@ export const demoPlaces: PlaceSummary[] = [
       "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
     rating: 4.7,
+    openNow: true,
     coordinates: {
       latitude: 25.2048,
       longitude: 55.2708
@@ -28,6 +29,7 @@ export const demoPlaces: PlaceSummary[] = [
       "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$$",
     rating: 4.5,
+    openNow: true,
     coordinates: {
       latitude: 24.4539,
       longitude: 54.3773
@@ -44,6 +46,7 @@ export const demoPlaces: PlaceSummary[] = [
       "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
     rating: 4.6,
+    openNow: false,
     coordinates: {
       latitude: 25.3463,
       longitude: 55.4209
@@ -60,6 +63,7 @@ export const demoPlaces: PlaceSummary[] = [
       "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
     rating: 4.4,
+    openNow: true,
     coordinates: {
       latitude: 25.1972,
       longitude: 55.2744
@@ -76,6 +80,7 @@ export const demoPlaces: PlaceSummary[] = [
       "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$",
     rating: 4.3,
+    openNow: false,
     coordinates: {
       latitude: 25.4052,
       longitude: 55.5136
@@ -92,30 +97,13 @@ export const demoPlaces: PlaceSummary[] = [
       "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$$",
     rating: 4.8,
+    openNow: true,
     coordinates: {
       latitude: 25.8007,
       longitude: 55.9762
     }
   }
 ];
-
-export function filterDemoPlaces(query?: string) {
-  const normalizedQuery = query?.trim().toLowerCase();
-
-  if (!normalizedQuery) {
-    return demoPlaces;
-  }
-
-  return demoPlaces.filter((place) =>
-    [
-      place.name,
-      place.city,
-      place.country,
-      place.description,
-      ...place.cuisines
-    ].some((value) => value.toLowerCase().includes(normalizedQuery))
-  );
-}
 
 export function findDemoPlaceById(id: string) {
   return demoPlaces.find((place) => place.id === id) ?? null;

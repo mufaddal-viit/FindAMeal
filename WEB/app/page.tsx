@@ -3,8 +3,9 @@ import PageHeader from "@/components/PageHeader";
 import PlaceCard from "@/components/PlaceCard";
 import SearchForm from "@/components/SearchForm";
 import StarterFlowCard from "@/components/StarterFlowCard";
+import type { Place } from "@/types/place";
 
-const featuredPlaces = [
+const featuredPlaces: Place[] = [
   {
     id: "demo-dubai-saffron-table",
     name: "Saffron Table",
@@ -16,7 +17,7 @@ const featuredPlaces = [
     imageUrl:
       "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
-    rating: 4.7,
+    rating: 4.7
   },
   {
     id: "demo-abu-dhabi-harbor-bowl",
@@ -28,7 +29,7 @@ const featuredPlaces = [
     imageUrl:
       "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$$",
-    rating: 4.5,
+    rating: 4.5
   },
   {
     id: "demo-sharjah-cedar-corner",
@@ -40,8 +41,8 @@ const featuredPlaces = [
     imageUrl:
       "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
-    rating: 4.6,
-  },
+    rating: 4.6
+  }
 ];
 
 export default function HomePage() {

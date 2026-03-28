@@ -3,9 +3,9 @@ import { HttpError } from "./httpError";
 export const SEARCH_QUERY_MAX_LENGTH = 80;
 
 const CONTROL_CHAR_REGEX = /[\u0000-\u001F\u007F]/g;
-const HAS_CONTROL_CHAR_REGEX = /[\u0000-\u001F\u007F]/;
+export const HAS_CONTROL_CHAR_REGEX = /[\u0000-\u001F\u007F]/;
 const MULTIPLE_WHITESPACE_REGEX = /\s+/g;
-const ALLOWED_SEARCH_CHARACTERS_REGEX = /^[\p{L}\p{N}\s&'.,()/-]*$/u;
+export const ALLOWED_SEARCH_CHARACTERS_REGEX = /^[\p{L}\p{N}\s&'.,()/-]*$/u;
 
 export function normalizeSearchQuery(value: string) {
   return value
@@ -37,4 +37,3 @@ export function validateSearchQuery(value: string) {
 
   return normalized;
 }
-

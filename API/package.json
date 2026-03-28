@@ -14,7 +14,8 @@
     "@prisma/client": "6.15.0",
     "cors": "2.8.5",
     "dotenv": "17.2.2",
-    "express": "5.1.0"
+    "express": "5.1.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/cors": "2.8.19",
@@ -25,4 +26,3 @@
     "typescript": "5.9.2"
   }
 }
-

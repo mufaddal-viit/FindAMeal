@@ -1,7 +1,7 @@
 import { normalizeSearchQuery } from "@/lib/searchQuery";
 import type { Coordinates } from "@/types/place";
 
-export const LOCATION_MAX_LENGTH = 60;
+export const LOCATION_MAX_LENGTH = 200;
 export const CURRENT_LOCATION_LABEL = "Current location";
 
 export type SearchCoordinates = Coordinates;
