@@ -6,13 +6,43 @@ import PageHeader from "@/components/PageHeader";
 import PlaceCard from "@/components/PlaceCard";
 import SearchForm from "@/components/SearchForm";
 import { usePlaces } from "@/hooks/usePlaces";
+import { buildPlaceResults } from "@/lib/placeResults";
+import type {
+  SearchCategory,
+  SearchSortValue
+} from "@/lib/searchFormOptions";
 
 interface ResultsPageContentProps {
   query: string;
+  location?: string;
+  category?: SearchCategory;
+  sort?: SearchSortValue;
+  latitude?: number;
+  longitude?: number;
 }
 
-export default function ResultsPageContent({ query }: ResultsPageContentProps) {
+export default function ResultsPageContent({
+  query,
+  location = "",
+  category = "All",
+  sort = "rating",
+  latitude,
+  longitude
+}: ResultsPageContentProps) {
   const { places, loading, error, source } = usePlaces(query);
+  const { places: visiblePlaces, effectiveSort } = buildPlaceResults({
+    places,
+    location,
+    category,
+    sort,
+    userCoordinates:
+      typeof latitude === "number" && typeof longitude === "number"
+        ? {
+            latitude,
+            longitude
+          }
+        : null
+  });
 
   return (
     <main className="space-y-8 py-10">
@@ -22,19 +52,37 @@ export default function ResultsPageContent({ query }: ResultsPageContentProps) {
           title={query ? `Places matching "${query}"` : "Browse places"}
           description=""
         />
-        <SearchForm initialValue={query} compact />
+        <SearchForm
+          initialValue={query}
+          initialLocation={location}
+          initialCategory={category}
+          initialSort={sort}
+          initialLatitude={latitude}
+          initialLongitude={longitude}
+          compact
+        />
         {source ? (
-          <p className="text-sm text-leaf/70">
-            Data source:{" "}
-            <span className="font-semibold text-ink">{source}</span>
-          </p>
+          <div className="space-y-1">
+            <p className="text-sm text-leaf/70">
+              Data source:{" "}
+              <span className="font-semibold text-ink">{source}</span>
+            </p>
+            {sort === "distance" && effectiveSort !== "distance" ? (
+              <p className="text-sm text-leaf/70">
+                Distance sorting needs your current location. Showing top-rated
+                places instead.
+              </p>
+            ) : null}
+          </div>
         ) : null}
       </section>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-leaf/80">
-            {loading ? "Loading places..." : `${places.length} place(s) found`}
+            {loading
+              ? "Loading places..."
+              : `${visiblePlaces.length} place(s) found`}
           </p>
           <Link
             href="/"
@@ -55,10 +103,14 @@ export default function ResultsPageContent({ query }: ResultsPageContentProps) {
           </div>
         ) : null}
 
-        {!loading && !error && places.length > 0 ? (
+        {!loading && !error && visiblePlaces.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {places.map((place) => (
-              <PlaceCard key={place.id} place={place} />
+            {visiblePlaces.map((place) => (
+              <PlaceCard
+                key={place.id}
+                place={place}
+                distanceKm={place.distanceKm}
+              />
             ))}
           </div>
         ) : null}
@@ -71,10 +123,10 @@ export default function ResultsPageContent({ query }: ResultsPageContentProps) {
         />
       ) : null}
 
-      {!loading && !error && places.length === 0 ? (
+      {!loading && !error && visiblePlaces.length === 0 ? (
         <EmptyState
           title="No places found"
-          description="Try a broader city or cuisine search, or add more entries to the demo data file and search again."
+          description="Try a broader city, a different category, or adjust the current location and sort selection."
         />
       ) : null}
     </main>

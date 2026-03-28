@@ -4,9 +4,18 @@ import type { Place } from "@/types/place";
 
 interface PlaceCardProps {
   place: Place;
+  distanceKm?: number;
 }
 
-export default function PlaceCard({ place }: PlaceCardProps) {
+function formatDistance(distanceKm: number) {
+  if (distanceKm < 10) {
+    return `${distanceKm.toFixed(1)} km away`;
+  }
+
+  return `${Math.round(distanceKm)} km away`;
+}
+
+export default function PlaceCard({ place, distanceKm }: PlaceCardProps) {
   return (
     <article className="overflow-hidden rounded-[2rem] border border-leaf/10 bg-paper shadow-lg shadow-leaf/10 backdrop-blur transition hover:-translate-y-1 hover:shadow-amber/20">
       <div className="relative h-56">
@@ -18,10 +27,15 @@ export default function PlaceCard({ place }: PlaceCardProps) {
           sizes="(max-width: 768px) 100vw, 33vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/65 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-paper">
+        <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-2 text-paper">
           <span className="rounded-full border border-paper bg-ink/40 px-3 py-1 text-xs font-semibold backdrop-blur">
             {place.priceLevel}
           </span>
+          {distanceKm !== undefined ? (
+            <span className="rounded-full border border-paper bg-ink/40 px-3 py-1 text-xs font-semibold backdrop-blur">
+              {formatDistance(distanceKm)}
+            </span>
+          ) : null}
           <span className="rounded-full border border-paper bg-ink/40 px-3 py-1 text-xs font-semibold backdrop-blur">
             {place.rating.toFixed(1)} / 5
           </span>

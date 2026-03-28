@@ -1,3 +1,8 @@
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
 export interface PlaceSummary {
   id: string;
   name: string;
@@ -8,7 +13,7 @@ export interface PlaceSummary {
   imageUrl: string;
   priceLevel: string;
   rating: number;
+  coordinates?: Coordinates;
 }
 
 export type DataSource = "database" | "fallback" | "demo";
-

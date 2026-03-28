@@ -8,3 +8,4 @@ WEB/out
 WEB/.env.local
 WEB/.env.*
 *.log
+.codex/

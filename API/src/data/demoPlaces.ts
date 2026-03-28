@@ -11,7 +11,11 @@ export const demoPlaces: PlaceSummary[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
-    rating: 4.7
+    rating: 4.7,
+    coordinates: {
+      latitude: 25.2048,
+      longitude: 55.2708
+    }
   },
   {
     id: "demo-abu-dhabi-harbor-bowl",
@@ -23,7 +27,11 @@ export const demoPlaces: PlaceSummary[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$$",
-    rating: 4.5
+    rating: 4.5,
+    coordinates: {
+      latitude: 24.4539,
+      longitude: 54.3773
+    }
   },
   {
     id: "demo-sharjah-cedar-corner",
@@ -35,7 +43,11 @@ export const demoPlaces: PlaceSummary[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
-    rating: 4.6
+    rating: 4.6,
+    coordinates: {
+      latitude: 25.3463,
+      longitude: 55.4209
+    }
   },
   {
     id: "demo-dubai-noodle-yard",
@@ -47,7 +59,11 @@ export const demoPlaces: PlaceSummary[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
-    rating: 4.4
+    rating: 4.4,
+    coordinates: {
+      latitude: 25.1972,
+      longitude: 55.2744
+    }
   },
   {
     id: "demo-ajman-garden-brunch",
@@ -59,7 +75,11 @@ export const demoPlaces: PlaceSummary[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$",
-    rating: 4.3
+    rating: 4.3,
+    coordinates: {
+      latitude: 25.4052,
+      longitude: 55.5136
+    }
   },
   {
     id: "demo-ras-al-khaimah-firewood-kitchen",
@@ -71,7 +91,11 @@ export const demoPlaces: PlaceSummary[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$$",
-    rating: 4.8
+    rating: 4.8,
+    coordinates: {
+      latitude: 25.8007,
+      longitude: 55.9762
+    }
   }
 ];
 
@@ -96,4 +120,3 @@ export function filterDemoPlaces(query?: string) {
 export function findDemoPlaceById(id: string) {
   return demoPlaces.find((place) => place.id === id) ?? null;
 }
-

@@ -1,3 +1,8 @@
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
 export interface Place {
   id: string;
   name: string;
@@ -8,6 +13,7 @@ export interface Place {
   imageUrl: string;
   priceLevel: string;
   rating: number;
+  coordinates?: Coordinates;
 }
 
 export interface PlacesResponse {
@@ -25,4 +31,3 @@ export interface PlaceResponse {
     source: string;
   };
 }
-
