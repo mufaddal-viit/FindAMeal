@@ -67,6 +67,17 @@ export default function ResultsPageContent({
               Data source:{" "}
               <span className="font-semibold text-ink">{meta.source}</span>
             </p>
+            {meta.ai ? (
+              <p className="text-sm text-leaf/70">
+                AI searched for{" "}
+                <span className="font-semibold text-ink">
+                  {meta.ai.queryUsed}
+                </span>
+                {meta.ai.sources.length > 0
+                  ? ` across ${meta.ai.sources.length} source(s).`
+                  : "."}
+              </p>
+            ) : null}
             {sort === "distance" && meta.effectiveSort !== "distance" ? (
               <p className="text-sm text-leaf/70">
                 Distance sorting needs your current location. Showing top-rated

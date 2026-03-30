@@ -27,7 +27,7 @@ export default function StarterFlowCard() {
         </div>
       </div>
       <Link
-        href="/results?q=Dubai"
+        href="/results?q=restaurants&location=Dubai%2C%20UAE"
         className="mt-8 inline-flex rounded-full bg-amber px-5 py-3 text-sm font-semibold text-ink transition hover:bg-ink hover:text-paper"
       >
         View sample results
@@ -35,4 +35,3 @@ export default function StarterFlowCard() {
     </div>
   );
 }
-

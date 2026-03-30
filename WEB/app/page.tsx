@@ -9,39 +9,60 @@ const featuredPlaces: Place[] = [
   {
     id: "demo-dubai-saffron-table",
     name: "Saffron Table",
-    city: "Dubai",
-    country: "UAE",
     description:
       "Fresh mezze, grilled mains, and a calm dining room for easy weeknight meals.",
+    address: "Sheikh Mohammed bin Rashid Blvd, Downtown Dubai, UAE",
+    city: "Dubai",
+    country: "UAE",
     cuisines: ["Middle Eastern", "Grill", "Desserts"],
     imageUrl:
       "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
-    rating: 4.7
+    priceRange: "mid",
+    rating: 4.7,
+    openNow: true,
+    distanceKm: null,
+    sourceUrl: null,
+    tags: ["mezze", "grill", "desserts"],
+    coordinates: null
   },
   {
     id: "demo-abu-dhabi-harbor-bowl",
     name: "Harbor Bowl",
+    description: "Seafood bowls and bright sides with a fast, casual feel.",
+    address: "Corniche Road, Abu Dhabi, UAE",
     city: "Abu Dhabi",
     country: "UAE",
-    description: "Seafood bowls and bright sides with a fast, casual feel.",
     cuisines: ["Seafood", "Healthy", "Bowls"],
     imageUrl:
       "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$$",
-    rating: 4.5
+    priceRange: "premium",
+    rating: 4.5,
+    openNow: true,
+    distanceKm: null,
+    sourceUrl: null,
+    tags: ["seafood", "healthy", "bowls"],
+    coordinates: null
   },
   {
     id: "demo-sharjah-cedar-corner",
     name: "Cedar Corner",
+    description: "Wraps, salads, and quick comfort food for lunch or dinner.",
+    address: "Al Majaz Waterfront, Sharjah, UAE",
     city: "Sharjah",
     country: "UAE",
-    description: "Wraps, salads, and quick comfort food for lunch or dinner.",
     cuisines: ["Lebanese", "Wraps", "Salads"],
     imageUrl:
       "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
     priceLevel: "$$",
-    rating: 4.6
+    priceRange: "mid",
+    rating: 4.6,
+    openNow: false,
+    distanceKm: null,
+    sourceUrl: null,
+    tags: ["lebanese", "wraps", "salads"],
+    coordinates: null
   }
 ];
 
@@ -72,7 +93,7 @@ export default function HomePage() {
             </h2>
           </div>
           <Link
-            href="/results?q=UAE"
+            href="/results?q=restaurants&location=Dubai%2C%20UAE"
             className="text-sm font-semibold text-amber transition hover:text-ink"
           >
             Browse all

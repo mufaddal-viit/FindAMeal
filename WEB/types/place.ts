@@ -1,6 +1,8 @@
 import type { PlaceSort } from "@/types/placeFilters";
 
 export type PriceLevel = "$" | "$$" | "$$$" | "$$$$";
+export type PriceRange = "budget" | "mid" | "premium";
+export type DataSource = "ai" | "database" | "fallback" | "demo";
 
 export interface Coordinates {
   latitude: number;
@@ -10,16 +12,20 @@ export interface Coordinates {
 export interface Place {
   id: string;
   name: string;
+  description: string;
+  address: string;
   city: string;
   country: string;
-  description: string;
   cuisines: string[];
   imageUrl: string;
-  priceLevel: PriceLevel;
-  rating: number;
-  openNow?: boolean;
-  coordinates?: Coordinates;
-  distanceKm?: number;
+  rating: number | null;
+  priceLevel: PriceLevel | null;
+  priceRange: PriceRange | null;
+  openNow: boolean | null;
+  distanceKm: number | null;
+  sourceUrl: string | null;
+  tags: string[];
+  coordinates?: Coordinates | null;
 }
 
 export interface PlaceListFilters {
@@ -47,6 +53,13 @@ export interface PlacesAppliedFilters {
   openNow?: boolean;
 }
 
+export interface AiSearchMetadata {
+  queryUsed: string;
+  searchQueries: string[];
+  sources: string[];
+  timestamp: string;
+}
+
 export interface PlacesResponseMeta {
   query: string;
   total: number;
@@ -55,8 +68,9 @@ export interface PlacesResponseMeta {
   totalPages: number;
   sort: PlaceSort;
   effectiveSort: PlaceSort;
-  source: string;
+  source: DataSource;
   appliedFilters: PlacesAppliedFilters;
+  ai?: AiSearchMetadata;
 }
 
 export interface PlacesResponse {
@@ -67,6 +81,6 @@ export interface PlacesResponse {
 export interface PlaceResponse {
   data: Place;
   meta: {
-    source: string;
+    source: DataSource;
   };
 }

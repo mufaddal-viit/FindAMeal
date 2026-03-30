@@ -4,8 +4,9 @@ import { HttpError } from "../utils/httpError";
 import { parsePlaceFilters } from "../utils/placeFilters";
 
 export async function listPlacesController(req: Request, res: Response) {
-  const filters = parsePlaceFilters(req.query);
-  const result = await getPlaces(filters);
+  const filters = parsePlaceFilters(req.body);
+  const requestIp = req.ip ?? "unknown";
+  const result = await getPlaces(filters, requestIp);
 
   res.status(200).json({
     data: result.data,

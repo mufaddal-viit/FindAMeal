@@ -8,7 +8,7 @@ router.get("/health", (_req, res) => {
   res.status(200).json({
     message: "FindAMeal API is running.",
     environment: env.nodeEnv,
-    source: "demo"
+    source: "ai"
   });
 });
 

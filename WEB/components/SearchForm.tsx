@@ -120,6 +120,7 @@ export default function SearchForm({
   const [error, setError] = useState<string | null>(
     validateSearchQuery(initialSanitizedValue).error
   );
+  const [formError, setFormError] = useState<string | null>(null);
   const [mapSelection, setMapSelection] = useState<MapSelection | null>(
     initialMapSelection
   );
@@ -209,6 +210,7 @@ export default function SearchForm({
   function handleLocationChange(event: ChangeEvent<HTMLInputElement>) {
     setMapSelection(null);
     setRadiusKm(undefined);
+    setFormError(null);
     setLocation(sanitizeLocationInput(event.target.value));
   }
 
@@ -226,6 +228,7 @@ export default function SearchForm({
     });
     setLocation(result.address);
     setSort("distance");
+    setFormError(null);
     setIsLocationPickerOpen(false);
     setIsFiltersOpen(false);
   }
@@ -244,6 +247,13 @@ export default function SearchForm({
       return;
     }
 
+    if (!normalizedLocation) {
+      setFormError("Location is required.");
+      return;
+    }
+
+    setFormError(null);
+
     const params = buildResultsSearchParams({
       query: validation.normalized,
       location: normalizedLocation,
@@ -256,7 +266,7 @@ export default function SearchForm({
       priceLevels,
       openNow,
       page: 1,
-      pageSize: 20
+      pageSize: 10
     });
 
     const destination = params.toString()
@@ -292,8 +302,8 @@ export default function SearchForm({
             maxLength={SEARCH_QUERY_MAX_LENGTH}
             autoComplete="off"
             enterKeyHint="search"
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? errorTextId : helpTextId}
+            aria-invalid={Boolean(error || formError)}
+            aria-describedby={error || formError ? errorTextId : helpTextId}
             className="w-full bg-transparent text-base text-ink outline-none placeholder:text-leaf/60"
           />
         </label>
@@ -401,6 +411,14 @@ export default function SearchForm({
             className="text-xs font-medium text-amber"
           >
             {error}
+          </p>
+        ) : formError ? (
+          <p
+            id={errorTextId}
+            role="alert"
+            className="text-xs font-medium text-amber"
+          >
+            {formError}
           </p>
         ) : null}
       </div>

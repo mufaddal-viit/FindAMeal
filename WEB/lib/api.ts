@@ -5,11 +5,10 @@ import type { PlaceListFilters, PlaceResponse, PlacesResponse } from "@/types/pl
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api",
-  timeout: 10000
+  timeout: 20000
 });
 
-function buildPlacesParams(filters: PlaceListFilters) {
-  const params = new URLSearchParams();
+function buildPlacesPayload(filters: PlaceListFilters) {
   const normalizedQuery = normalizeSearchQuery(filters.query ?? "");
   const validation = validateSearchQuery(normalizedQuery);
 
@@ -18,59 +17,61 @@ function buildPlacesParams(filters: PlaceListFilters) {
   }
 
   const normalizedLocation = normalizeLocationInput(filters.location ?? "");
+  const payload: PlaceListFilters = {};
+
+  if (!normalizedLocation) {
+    throw new Error("Location is required.");
+  }
 
   if (validation.normalized) {
-    params.set("q", validation.normalized);
+    payload.query = validation.normalized;
   }
 
-  if (normalizedLocation) {
-    params.set("location", normalizedLocation);
-  }
+  payload.location = normalizedLocation;
 
   if (filters.category) {
-    params.set("category", filters.category);
+    payload.category = filters.category;
   }
 
-  if (filters.sort && filters.sort !== "rating") {
-    params.set("sort", filters.sort);
+  if (filters.sort) {
+    payload.sort = filters.sort;
   }
 
   if (typeof filters.lat === "number" && typeof filters.lng === "number") {
-    params.set("lat", filters.lat.toString());
-    params.set("lng", filters.lng.toString());
+    payload.lat = filters.lat;
+    payload.lng = filters.lng;
   }
 
   if (typeof filters.radiusKm === "number") {
-    params.set("radiusKm", filters.radiusKm.toString());
+    payload.radiusKm = filters.radiusKm;
   }
 
   if (typeof filters.minRating === "number") {
-    params.set("minRating", filters.minRating.toString());
+    payload.minRating = filters.minRating;
   }
 
   if (filters.priceLevels && filters.priceLevels.length > 0) {
-    params.set("priceLevels", filters.priceLevels.join(","));
+    payload.priceLevels = filters.priceLevels;
   }
 
   if (typeof filters.openNow === "boolean") {
-    params.set("openNow", filters.openNow ? "true" : "false");
+    payload.openNow = filters.openNow;
   }
 
   if (typeof filters.page === "number" && filters.page > 1) {
-    params.set("page", filters.page.toString());
+    payload.page = filters.page;
   }
 
   if (typeof filters.pageSize === "number") {
-    params.set("pageSize", filters.pageSize.toString());
+    payload.pageSize = filters.pageSize;
   }
 
-  return params;
+  return payload;
 }
 
 export async function fetchPlaces(filters: PlaceListFilters = {}, signal?: AbortSignal) {
-  const params = buildPlacesParams(filters);
-  const response = await api.get<PlacesResponse>("/places", {
-    params,
+  const payload = buildPlacesPayload(filters);
+  const response = await api.post<PlacesResponse>("/places", payload, {
     signal
   });
 

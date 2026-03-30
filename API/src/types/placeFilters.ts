@@ -1,4 +1,4 @@
-import type { PriceLevel } from "./place";
+import type { AiSearchMetadata, PriceLevel } from "./place";
 
 export const PLACE_SORT_VALUES = [
   "distance",
@@ -11,7 +11,7 @@ export type PlaceSort = (typeof PLACE_SORT_VALUES)[number];
 
 export interface PlaceFilters {
   query?: string;
-  location?: string;
+  location: string;
   category?: string;
   lat?: number;
   lng?: number;
@@ -43,4 +43,5 @@ export interface PlacesResultMeta {
   sort: PlaceSort;
   effectiveSort: PlaceSort;
   appliedFilters: AppliedPlaceFilters;
+  ai?: AiSearchMetadata;
 }

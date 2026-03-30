@@ -1,6 +1,8 @@
 export const PRICE_LEVEL_VALUES = ["$", "$$", "$$$", "$$$$"] as const;
+export const PRICE_RANGE_VALUES = ["budget", "mid", "premium"] as const;
 
 export type PriceLevel = (typeof PRICE_LEVEL_VALUES)[number];
+export type PriceRange = (typeof PRICE_RANGE_VALUES)[number];
 
 export interface Coordinates {
   latitude: number;
@@ -10,16 +12,27 @@ export interface Coordinates {
 export interface PlaceSummary {
   id: string;
   name: string;
+  description: string;
+  address: string;
   city: string;
   country: string;
-  description: string;
   cuisines: string[];
   imageUrl: string;
-  priceLevel: PriceLevel;
-  rating: number;
-  openNow: boolean;
-  coordinates?: Coordinates;
-  distanceKm?: number;
+  rating: number | null;
+  priceLevel: PriceLevel | null;
+  priceRange: PriceRange | null;
+  openNow: boolean | null;
+  distanceKm: number | null;
+  sourceUrl: string | null;
+  tags: string[];
+  coordinates?: Coordinates | null;
 }
 
-export type DataSource = "database" | "fallback" | "demo";
+export interface AiSearchMetadata {
+  queryUsed: string;
+  searchQueries: string[];
+  sources: string[];
+  timestamp: string;
+}
+
+export type DataSource = "ai" | "database" | "fallback" | "demo";

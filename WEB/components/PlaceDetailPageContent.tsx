@@ -18,7 +18,7 @@ export default function PlaceDetailPageContent({
     <main className="space-y-8 py-10">
       <div className="flex items-center justify-between gap-4">
         <Link
-          href="/results?q=UAE"
+          href="/results?q=restaurants&location=Dubai%2C%20UAE"
           className="text-sm font-semibold text-leaf transition hover:text-ink"
         >
           Back to results
@@ -47,7 +47,7 @@ export default function PlaceDetailPageContent({
       {!loading && !error && !place ? (
         <EmptyState
           title="Place not found"
-          description="This starter route currently reads from the demo data file, so use one of those IDs or add a new demo entry."
+          description="This place is not available in the current AI search cache or demo fallback set."
         />
       ) : null}
 

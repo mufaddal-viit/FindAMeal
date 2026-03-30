@@ -7,8 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 
 const placeRouter = Router();
 
-placeRouter.get("/", asyncHandler(listPlacesController));
+placeRouter.post("/", asyncHandler(listPlacesController));
 placeRouter.get("/:id", asyncHandler(getPlaceController));
 
 export default placeRouter;
-

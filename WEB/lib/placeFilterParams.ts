@@ -26,8 +26,8 @@ const RATING_FILTER_VALUES = RATING_FILTER_OPTIONS.flatMap((option) =>
   typeof option.value === "number" ? [option.value] : []
 );
 const DEFAULT_PAGE = 1;
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 10;
 
 export interface SearchFormFilterValues {
   query: string;
@@ -128,11 +128,15 @@ export function parseFiltersFromSearchParams(
     getSingleValue(searchParams.minRating),
     RATING_FILTER_VALUES
   );
+  const normalizedLocation = normalizeLocationInput(rawLocation);
+  const error =
+    queryValidation.error ??
+    (normalizedLocation ? null : "Location is required.");
 
   return {
     values: {
       query: queryValidation.normalized,
-      location: normalizeLocationInput(rawLocation),
+      location: normalizedLocation,
       category: isSearchCategory(rawCategory) ? rawCategory : "All",
       sort: isSearchSortValue(rawSort) ? rawSort : "rating",
       latitude,
@@ -151,7 +155,7 @@ export function parseFiltersFromSearchParams(
         MAX_PAGE_SIZE
       )
     },
-    error: queryValidation.error
+    error
   };
 }
 
