@@ -60,13 +60,13 @@ export function estimateTokens(text: string) {
   return Math.ceil(text.length / 4);
 }
 
-export function assertTokenBudget(promptText: string) {
+export function assertTokenBudget(promptText: string, maxInputTokens: number) {
   const estimatedTokenCount = estimateTokens(promptText);
 
-  if (estimatedTokenCount > AI_CONFIG.model.maxInputTokens) {
+  if (estimatedTokenCount > maxInputTokens) {
     throw new HttpError(
       400,
-      `Prompt too large: estimated ${estimatedTokenCount} tokens exceeds the limit of ${AI_CONFIG.model.maxInputTokens}.`
+      `Prompt too large: estimated ${estimatedTokenCount} tokens exceeds the limit of ${maxInputTokens}.`
     );
   }
 

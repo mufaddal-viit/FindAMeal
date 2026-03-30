@@ -1,18 +1,28 @@
 import "dotenv/config";
 import { AI_CONFIG } from "../src/config/ai.config";
-import { getGeminiClient, getGeminiGenerateConfig } from "../src/ai/gemini/client";
+import {
+  getGeminiClient,
+  getGeminiGenerateConfigForModel
+} from "../src/ai/gemini/client";
 import { parseGeminiResponse } from "../src/ai/gemini/parser";
+import {
+  createGroqChatCompletion,
+  getGroqGenerateConfigForModel
+} from "../src/ai/groq/client";
+import { parseGroqResponse } from "../src/ai/groq/parser";
 import { buildRestaurantSearchPrompt } from "../src/ai/gemini/prompt";
 import {
   assertTokenBudget,
   detectInjectionAttempt,
   sanitizeFilters
 } from "../src/ai/gemini/safeguards";
+import { AI_PROVIDER_IDS, type AiProviderId } from "../src/ai/types";
 import type { PriceLevel } from "../src/types/place";
 import type { PlaceFilters, PlaceSort } from "../src/types/placeFilters";
 
 interface CliOptions {
   filters: PlaceFilters;
+  provider: AiProviderId;
   printPromptOnly: boolean;
   printRequestOnly: boolean;
 }
@@ -46,6 +56,16 @@ function parsePriceLevels(value: string) {
     .filter(Boolean) as PriceLevel[];
 }
 
+function parseProvider(value: string) {
+  if (AI_PROVIDER_IDS.includes(value as AiProviderId)) {
+    return value as AiProviderId;
+  }
+
+  throw new Error(
+    `Provider must be one of: ${AI_PROVIDER_IDS.join(", ")}.`
+  );
+}
+
 function printHelp() {
   console.log(`
 Usage:
@@ -53,6 +73,7 @@ Usage:
 
 Options:
   --query <text>
+  --search-location <text>
   --location <text>
   --category <text>
   --lat <number>
@@ -64,14 +85,15 @@ Options:
   --sort <distance|rating|price-low|price-high>
   --page <number>
   --pageSize <number>
+  --provider <gemini-flash|gemini-pro|groq-llama-3.3-70b>
   --print-prompt
   --print-request
   --help
 
 Examples:
-  npm run test:gemini -- --query "ramen" --location "Dubai, UAE"
-  npm run test:gemini -- --query "seafood" --location "Dubai Marina, UAE" --lat 25.08 --lng 55.14 --radiusKm 5 --openNow true --sort distance
-  npm run test:gemini -- --query "ramen" --location "Dubai, UAE" --print-request
+  npm run test:gemini -- --query "ramen" --search-location "Dubai, UAE"
+  npm run test:gemini -- --query "seafood" --search-location "Dubai Marina, UAE" --lat 25.08 --lng 55.14 --radiusKm 5 --openNow true --sort distance
+  npm run test:gemini -- --query "ramen" --search-location "Dubai, UAE" --print-request
 `.trim());
 }
 
@@ -82,6 +104,7 @@ function parseCliOptions(argv: string[]): CliOptions {
     page: 1,
     pageSize: 10
   };
+  let provider: AiProviderId = AI_CONFIG.selection.provider;
   let printPromptOnly = false;
   let printRequestOnly = false;
 
@@ -92,6 +115,7 @@ function parseCliOptions(argv: string[]): CliOptions {
       case "--query":
         filters.query = argv[++index] ?? "";
         break;
+      case "--search-location":
       case "--location":
         filters.location = argv[++index] ?? "";
         break;
@@ -125,6 +149,9 @@ function parseCliOptions(argv: string[]): CliOptions {
       case "--pageSize":
         filters.pageSize = parseNumberFlag(argv[++index] ?? "", "Page size");
         break;
+      case "--provider":
+        provider = parseProvider(argv[++index] ?? "");
+        break;
       case "--print-prompt":
         printPromptOnly = true;
         break;
@@ -141,6 +168,7 @@ function parseCliOptions(argv: string[]): CliOptions {
 
   return {
     filters,
+    provider,
     printPromptOnly,
     printRequestOnly
   };
@@ -154,7 +182,35 @@ function getRawResponseText(response: { text?: string | (() => string) }) {
   return response.text ?? "";
 }
 
-function buildRestRequestBody(prompt: string) {
+function getGroqRawResponseText(response: {
+  choices?: Array<{ message?: { content?: string | null } }>;
+}) {
+  return response.choices?.[0]?.message?.content ?? "";
+}
+
+function isGroqProvider(provider: AiProviderId) {
+  return provider.startsWith("groq-");
+}
+
+function buildRestRequestBody(
+  prompt: string,
+  provider: AiProviderId
+) {
+  const modelConfig = AI_CONFIG.models[provider];
+
+  if (isGroqProvider(provider)) {
+    return {
+      model: modelConfig.modelName,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      ...getGroqGenerateConfigForModel(modelConfig)
+    };
+  }
+
   return {
     contents: [
       {
@@ -167,9 +223,9 @@ function buildRestRequestBody(prompt: string) {
     ],
     tools: [{ googleSearch: {} }],
     generationConfig: {
-      temperature: AI_CONFIG.model.temperature,
-      topP: AI_CONFIG.model.topP,
-      maxOutputTokens: AI_CONFIG.model.maxOutputTokens
+      temperature: modelConfig.temperature,
+      topP: modelConfig.topP,
+      maxOutputTokens: modelConfig.maxOutputTokens
     }
   };
 }
@@ -194,20 +250,23 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
 }
 
 async function main() {
-  const { filters: rawFilters, printPromptOnly, printRequestOnly } =
+  const { filters: rawFilters, provider, printPromptOnly, printRequestOnly } =
     parseCliOptions(process.argv.slice(2));
   const filters = sanitizeFilters(rawFilters);
+  const modelConfig = AI_CONFIG.models[provider];
 
   if (detectInjectionAttempt(filters)) {
     throw new Error("The supplied input triggered injection safeguards.");
   }
 
   const prompt = buildRestaurantSearchPrompt(filters);
-  const estimatedTokens = assertTokenBudget(prompt);
+  const estimatedTokens = assertTokenBudget(prompt, modelConfig.maxInputTokens);
 
   console.log("Sanitized filters:");
   console.log(JSON.stringify(filters, null, 2));
-  console.log(`\nEstimated prompt tokens: ${estimatedTokens}`);
+  console.log(`\nProvider: ${provider}`);
+  console.log(`Model: ${modelConfig.modelName}`);
+  console.log(`Estimated prompt tokens: ${estimatedTokens}`);
 
   if (printPromptOnly) {
     console.log("\nPrompt:");
@@ -217,40 +276,60 @@ async function main() {
 
   if (printRequestOnly) {
     console.log("\nPostman request URL:");
-    console.log(
-      `https://generativelanguage.googleapis.com/v1beta/models/${AI_CONFIG.model.name}:generateContent?key={{GEMINI_API_KEY}}`
-    );
+    if (isGroqProvider(provider)) {
+      console.log("https://api.groq.com/openai/v1/chat/completions");
+      console.log("\nPostman headers:");
+      console.log("Authorization: Bearer {{GROQ_API_KEY}}");
+      console.log("Content-Type: application/json");
+    } else {
+      console.log(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.modelName}:generateContent?key={{GEMINI_API_KEY}}`
+      );
+    }
     console.log("\nPostman request body:");
-    console.log(JSON.stringify(buildRestRequestBody(prompt), null, 2));
+    console.log(JSON.stringify(buildRestRequestBody(prompt, provider), null, 2));
     return;
   }
 
-  const client = await getGeminiClient();
-  const response = await withTimeout(
-    client.models.generateContent({
-      model: AI_CONFIG.model.name,
-      contents: prompt,
-      config: getGeminiGenerateConfig()
-    }),
-    AI_CONFIG.timeout.requestMs
-  );
-  const rawText = getRawResponseText(
-    response as Parameters<typeof parseGeminiResponse>[0]
-  );
+  let rawText = "";
+  let parsed:
+    | ReturnType<typeof parseGeminiResponse>
+    | ReturnType<typeof parseGroqResponse>;
 
-  console.log("\nRaw Gemini text:");
+  if (isGroqProvider(provider)) {
+    const response = await withTimeout(
+      createGroqChatCompletion(modelConfig, prompt),
+      modelConfig.timeoutMs
+    );
+    rawText = getGroqRawResponseText(response);
+    parsed = parseGroqResponse(response);
+  } else {
+    const client = await getGeminiClient();
+    const response = await withTimeout(
+      client.models.generateContent({
+        model: modelConfig.modelName,
+        contents: prompt,
+        config: getGeminiGenerateConfigForModel(modelConfig)
+      }),
+      modelConfig.timeoutMs
+    );
+    rawText = getRawResponseText(
+      response as Parameters<typeof parseGeminiResponse>[0]
+    );
+    parsed = parseGeminiResponse(
+      response as Parameters<typeof parseGeminiResponse>[0]
+    );
+  }
+
+  console.log("\nRaw model text:");
   console.log(rawText || "<empty>");
 
-  const parsed = parseGeminiResponse(
-    response as Parameters<typeof parseGeminiResponse>[0]
-  );
-
-  console.log("\nParsed Gemini payload:");
+  console.log("\nParsed provider payload:");
   console.log(JSON.stringify(parsed, null, 2));
 }
 
 main().catch((error) => {
-  console.error("\nGemini test failed.");
+  console.error("\nAI provider test failed.");
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);
 });

@@ -1,1 +1,1 @@
-export { findRestaurantsWithAI } from "./gemini/service";
+export { findRestaurantsWithAI } from "./service";

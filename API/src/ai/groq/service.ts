@@ -2,13 +2,8 @@ import { createHash } from "node:crypto";
 import { AI_CONFIG } from "../../config/ai.config";
 import type { PlaceSummary } from "../../types/place";
 import { HttpError } from "../../utils/httpError";
-import { getGeminiClient, getGeminiGenerateConfigForModel } from "./client";
-import { parseGeminiResponse } from "./parser";
-import { buildRestaurantSearchPrompt } from "./prompt";
-import {
-  GeminiTimeoutError,
-  assertTokenBudget
-} from "./safeguards";
+import { buildRestaurantSearchPrompt } from "../gemini/prompt";
+import { GeminiTimeoutError, assertTokenBudget } from "../gemini/safeguards";
 import type {
   AiModelConfig,
   AiRawRestaurant,
@@ -16,6 +11,8 @@ import type {
   AiSearchProvider,
   AiSearchResult
 } from "../types";
+import { createGroqChatCompletion } from "./client";
+import { parseGroqResponse } from "./parser";
 
 function generatePlaceId(rawRestaurant: AiRawRestaurant) {
   const idSeed = [
@@ -88,7 +85,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
   }
 }
 
-async function searchWithGeminiModel(
+async function searchWithGroqModel(
   filters: AiSearchFilters,
   modelConfig: AiModelConfig
 ): Promise<AiSearchResult> {
@@ -101,20 +98,12 @@ async function searchWithGeminiModel(
     estimatedTokens
   });
 
-  const client = await getGeminiClient();
-
   try {
     const response = await withTimeout(
-      client.models.generateContent({
-        model: modelConfig.modelName,
-        contents: prompt,
-        config: getGeminiGenerateConfigForModel(modelConfig)
-      }),
+      createGroqChatCompletion(modelConfig, prompt),
       modelConfig.timeoutMs
     );
-    const parsedResponse = parseGeminiResponse(
-      response as Parameters<typeof parseGeminiResponse>[0]
-    );
+    const parsedResponse = parseGroqResponse(response);
     const places = dedupePlaces(parsedResponse.results.map(toPlaceSummary));
 
     return {
@@ -142,11 +131,11 @@ async function searchWithGeminiModel(
   }
 }
 
-export function createGeminiProvider(modelConfig: AiModelConfig): AiSearchProvider {
+export function createGroqProvider(modelConfig: AiModelConfig): AiSearchProvider {
   return {
     id: modelConfig.id,
     searchRestaurants(filters) {
-      return searchWithGeminiModel(filters, modelConfig);
+      return searchWithGroqModel(filters, modelConfig);
     }
   };
 }

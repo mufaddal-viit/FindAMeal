@@ -49,11 +49,11 @@ function previewText(value: string, maxLength = 200) {
 
 function logParser(step: string, details?: Record<string, unknown>) {
   if (details) {
-    console.log(`[gemini-parser] ${step}`, details);
+    console.log(`[ai-parser] ${step}`, details);
     return;
   }
 
-  console.log(`[gemini-parser] ${step}`);
+  console.log(`[ai-parser] ${step}`);
 }
 
 function getResponseText(response: GeminiResponseLike) {

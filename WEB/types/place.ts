@@ -54,6 +54,8 @@ export interface PlacesAppliedFilters {
 }
 
 export interface AiSearchMetadata {
+  provider?: string;
+  model?: string;
   queryUsed: string;
   searchQueries: string[];
   sources: string[];

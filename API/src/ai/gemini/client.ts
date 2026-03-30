@@ -1,6 +1,7 @@
 import { AI_CONFIG } from "../../config/ai.config";
 import { env } from "../../config/env";
 import { HttpError } from "../../utils/httpError";
+import type { AiModelConfig } from "../types";
 
 export interface GeminiClientLike {
   models: {
@@ -31,10 +32,16 @@ export async function getGeminiClient() {
 }
 
 export function getGeminiGenerateConfig() {
+  const defaultModelConfig = AI_CONFIG.models["gemini-flash"];
+
+  return getGeminiGenerateConfigForModel(defaultModelConfig);
+}
+
+export function getGeminiGenerateConfigForModel(modelConfig: AiModelConfig) {
   return {
-    temperature: AI_CONFIG.model.temperature,
-    topP: AI_CONFIG.model.topP,
-    maxOutputTokens: AI_CONFIG.model.maxOutputTokens,
+    temperature: modelConfig.temperature,
+    topP: modelConfig.topP,
+    maxOutputTokens: modelConfig.maxOutputTokens,
     tools: [{ googleSearch: {} }]
   };
 }
