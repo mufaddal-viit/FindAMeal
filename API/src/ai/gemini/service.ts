@@ -12,7 +12,7 @@ import {
   assertTokenBudget,
   checkRateLimit,
   detectInjectionAttempt,
-  sanitizeFilters
+  sanitizeFilters,
 } from "./safeguards";
 import type { AiRawRestaurant, AiSearchResult } from "./types";
 
@@ -20,7 +20,7 @@ function generatePlaceId(rawRestaurant: AiRawRestaurant) {
   const idSeed = [
     rawRestaurant.name,
     rawRestaurant.address,
-    rawRestaurant.sourceUrl ?? ""
+    rawRestaurant.sourceUrl ?? "",
   ].join("|");
   const hash = createHash("sha1").update(idSeed).digest("hex").slice(0, 12);
 
@@ -37,7 +37,7 @@ function toCoordinates(rawRestaurant: AiRawRestaurant) {
 
   return {
     latitude: rawRestaurant.latitude,
-    longitude: rawRestaurant.longitude
+    longitude: rawRestaurant.longitude,
   };
 }
 
@@ -60,7 +60,7 @@ function toPlaceSummary(rawRestaurant: AiRawRestaurant): PlaceSummary {
     distanceKm: rawRestaurant.distanceKm,
     sourceUrl: rawRestaurant.sourceUrl,
     tags: rawRestaurant.tags,
-    coordinates
+    coordinates,
   };
 }
 
@@ -78,7 +78,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
         timeoutId = setTimeout(() => {
           reject(new GeminiTimeoutError());
         }, timeoutMs);
-      })
+      }),
     ]);
   } finally {
     if (timeoutId) {
@@ -89,7 +89,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
 
 export async function findRestaurantsWithAI(
   rawFilters: PlaceFilters,
-  requestIp: string
+  requestIp: string,
 ): Promise<AiSearchResult> {
   checkRateLimit(requestIp);
 
@@ -101,7 +101,7 @@ export async function findRestaurantsWithAI(
 
   const prompt = buildRestaurantSearchPrompt(filters);
   assertTokenBudget(prompt);
-
+  console.log(prompt);
   const client = await getGeminiClient();
 
   try {
@@ -109,14 +109,15 @@ export async function findRestaurantsWithAI(
       client.models.generateContent({
         model: AI_CONFIG.model.name,
         contents: prompt,
-        config: getGeminiGenerateConfig()
+        config: getGeminiGenerateConfig(),
       }),
-      AI_CONFIG.timeout.requestMs
+      AI_CONFIG.timeout.requestMs,
     );
     const parsedResponse = parseGeminiResponse(
-      response as Parameters<typeof parseGeminiResponse>[0]
+      response as Parameters<typeof parseGeminiResponse>[0],
     );
     const places = dedupePlaces(parsedResponse.results.map(toPlaceSummary));
+    
 
     return {
       data: places,
@@ -124,8 +125,8 @@ export async function findRestaurantsWithAI(
         queryUsed: filters.query,
         searchQueries: parsedResponse.searchQueries,
         sources: parsedResponse.sources,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
   } catch (error) {
     if (error instanceof HttpError) {
@@ -136,7 +137,7 @@ export async function findRestaurantsWithAI(
       502,
       error instanceof Error
         ? `Gemini API call failed: ${error.message}`
-        : "Gemini API call failed."
+        : "Gemini API call failed.",
     );
   }
 }

@@ -7,18 +7,18 @@ export const AI_CONFIG = {
     maxInputTokens: 1500,
     maxOutputTokens: 4096,
     temperature: 0.2,
-    topP: 0.8
+    topP: 0.8,
   },
   search: {
     maxResults: 10,
-    minResults: 1
+    minResults: 1,
   },
   rateLimit: {
     maxRequestsPerMinute: 10,
-    maxRequestsPerDay: 200
+    maxRequestsPerDay: 200,
   },
   timeout: {
-    requestMs: 15000
+    requestMs: 30000,
   },
   input: {
     maxQueryLength: 200,
@@ -30,17 +30,17 @@ export const AI_CONFIG = {
       /you are now/i,
       /forget everything/i,
       /disregard/i,
-      /<script/i
-    ]
+      /<script/i,
+    ],
   },
   response: {
     validPriceLevels: PRICE_LEVEL_VALUES,
     validPriceRanges: PRICE_RANGE_VALUES,
     validSortValues: PLACE_SORT_VALUES,
     placeholderImageUrl:
-      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
   },
   cache: {
-    resultTtlMs: 30 * 60 * 1000
-  }
+    resultTtlMs: 30 * 60 * 1000,
+  },
 } as const;

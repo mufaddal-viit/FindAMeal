@@ -18,6 +18,7 @@ import {
   sanitizeSearchQueryInput,
   validateSearchQuery
 } from "@/lib/searchQuery";
+import { SEARCH_SORT_OPTIONS } from "@/lib/searchFormOptions";
 import type { PriceLevel } from "@/types/place";
 
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
@@ -151,6 +152,22 @@ export default function SearchForm({
   });
   const effectiveCoordinates = mapSelection?.coordinates ?? null;
   const hasCoordinates = Boolean(effectiveCoordinates);
+  const sortLabel =
+    SEARCH_SORT_OPTIONS.find((option) => option.value === sort)?.label ??
+    "Rating";
+  const selectedFilterLabels = [
+    category !== "All" ? category : null,
+    radiusKm ? `< ${radiusKm} km` : null,
+    minRating ? `${minRating}+ stars` : null,
+    priceLevels.length > 0 ? priceLevels.join(" ") : null,
+    openNow ? "Open now" : null,
+    sort !== "rating" ? `Sort: ${sortLabel}` : null
+  ].filter((label): label is string => Boolean(label));
+  const locationStatus = mapSelection
+    ? "Pinned from map"
+    : location
+      ? "Manual area set"
+      : "Location needed";
 
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
@@ -280,147 +297,291 @@ export default function SearchForm({
       action="/results"
       method="get"
       onSubmit={handleSubmit}
-      className={`mx-auto space-y-4 rounded-[2rem] border border-leaf/10 bg-paper p-4 shadow-lg shadow-leaf/10 backdrop-blur ${
+      className={`mx-auto overflow-visible rounded-[2.15rem] border border-leaf/10 bg-paper p-4 shadow-xl shadow-leaf/10 backdrop-blur ${
         compact ? "w-full" : "w-full max-w-5xl"
       }`}
       noValidate
     >
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.72fr)_auto]">
-        <label
-          className={`flex h-16 items-center gap-3 rounded-[1.4rem] border bg-sand px-5 transition focus-within:border-leaf ${
-            error ? "border-amber" : "border-leaf/10"
+      <div className="rounded-[1.8rem] border border-leaf/10 bg-sand p-4 sm:p-5">
+        <div
+          className={`flex flex-wrap items-start justify-between gap-4 border-b border-leaf/10 ${
+            compact ? "pb-4" : "pb-5"
           }`}
         >
-          <SearchIcon />
-          <input
-            type="text"
-            name="q"
-            value={query}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="Pizza, Sushi, Burger..."
-            maxLength={SEARCH_QUERY_MAX_LENGTH}
-            autoComplete="off"
-            enterKeyHint="search"
-            aria-invalid={Boolean(error || formError)}
-            aria-describedby={error || formError ? errorTextId : helpTextId}
-            className="w-full bg-transparent text-base text-ink outline-none placeholder:text-leaf/60"
-          />
-        </label>
-
-        <label className="flex h-16 items-center gap-3 rounded-[1.4rem] border border-leaf/10 bg-sand px-5 transition focus-within:border-leaf">
-          <LocationIcon />
-          <input
-            type="text"
-            name="location"
-            value={location}
-            onChange={handleLocationChange}
-            onBlur={handleLocationBlur}
-            placeholder="Dubai, UAE"
-            maxLength={LOCATION_MAX_LENGTH}
-            autoComplete="off"
-            className="w-full bg-transparent text-base text-ink outline-none placeholder:text-leaf/60"
-          />
-        </label>
-
-        <button
-          type="submit"
-          className="h-16 rounded-[1.4rem] bg-leaf px-7 text-base font-semibold text-paper transition hover:bg-ink disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Find meals
-        </button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3 px-1">
-        <button
-          type="button"
-          onClick={() => {
-            setIsFiltersOpen(false);
-            setIsLocationPickerOpen(true);
-          }}
-          aria-label="Open location picker"
-          className="rounded-full border border-leaf/15 bg-sand px-4 py-2 text-sm font-medium text-leaf transition hover:border-leaf hover:bg-paper"
-        >
-          Choose location
-        </button>
-        <div ref={filtersDropdownRef} className="relative">
-          <button
-            type="button"
-            aria-label="Open advanced filters"
-            aria-expanded={isFiltersOpen}
-            aria-controls="search-filters-dropdown"
-            onClick={() => setIsFiltersOpen((current) => !current)}
-            className="inline-flex items-center gap-2 rounded-full border border-leaf/15 bg-sand px-4 py-2 text-sm font-medium text-leaf transition hover:border-leaf hover:bg-paper"
-          >
-            <span>Filters</span>
-            {activeFilterCount > 0 ? (
-              <span className="rounded-full bg-leaf px-2 py-0.5 text-xs font-semibold text-paper">
-                {activeFilterCount}
-              </span>
-            ) : null}
-          </button>
-
-          {isFiltersOpen ? (
-            <div
-              id="search-filters-dropdown"
-              className="absolute left-0 top-[calc(100%+0.75rem)] z-20 w-[min(100vw-2rem,56rem)]"
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-leaf">
+              {compact ? "Refine search" : "Search mission"}
+            </p>
+            <h2
+              className={`font-semibold text-ink ${
+                compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"
+              }`}
             >
-              <SearchFiltersDropdown
-                category={category}
-                sort={sort}
-                radiusKm={radiusKm}
-                minRating={minRating}
-                priceLevels={priceLevels}
-                openNow={openNow}
-                hasCoordinates={hasCoordinates}
-                activeFilterCount={activeFilterCount}
-                onCategoryChange={setCategory}
-                onSortChange={setSort}
-                onRadiusChange={setRadiusKm}
-                onMinRatingChange={setMinRating}
-                onTogglePriceLevel={togglePriceLevel}
-                onOpenNowChange={setOpenNow}
-                onReset={resetFilters}
-              />
-            </div>
-          ) : null}
+              {compact
+                ? "Tighten the shortlist without leaving the page."
+                : "Tell FindAMeal what you want, where to look, and how strict to be."}
+            </h2>
+            <p className="max-w-2xl text-sm leading-6 text-leaf/80">
+              Start with the craving, lock the location, then use filters only
+              when they help the decision.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full border border-leaf/10 bg-paper px-3 py-1.5 text-xs font-medium text-leaf">
+              {locationStatus}
+            </span>
+            <span className="rounded-full border border-leaf/10 bg-paper px-3 py-1.5 text-xs font-medium text-leaf">
+              {activeFilterCount > 0
+                ? `${activeFilterCount} filter${activeFilterCount > 1 ? "s" : ""} active`
+                : "Clean search"}
+            </span>
+            <span className="rounded-full border border-leaf/10 bg-paper px-3 py-1.5 text-xs font-medium text-leaf">
+              {hasCoordinates ? "Distance-ready" : "Text area search"}
+            </span>
+          </div>
         </div>
 
-        {mapSelection ? (
-          <p className="text-xs text-leaf/80">
-            Selected location: {mapSelection.address}
-          </p>
-        ) : location ? (
-          <p className="text-xs text-leaf/80">Location: {location}</p>
-        ) : (
-          <p className="text-xs text-leaf/70">
-            Add a location to unlock map-based distance filters.
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1 px-2">
-        <p id={helpTextId} className="text-xs text-leaf/70">
-          Up to {SEARCH_QUERY_MAX_LENGTH} characters. Allowed: letters, numbers,
-          spaces, and &apos; &amp; . , ( ) / -
-        </p>
-        {error ? (
-          <p
-            id={errorTextId}
-            role="alert"
-            className="text-xs font-medium text-amber"
-          >
-            {error}
-          </p>
-        ) : formError ? (
-          <p
-            id={errorTextId}
-            role="alert"
-            className="text-xs font-medium text-amber"
-          >
-            {formError}
-          </p>
+        {!compact ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[1.5rem] border border-leaf/10 bg-paper p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-leaf/70">
+                Query
+              </p>
+              <p className="mt-2 text-lg font-semibold text-ink">
+                {query || "Add a craving or cuisine"}
+              </p>
+              <p className="mt-1 text-sm text-leaf/75">
+                Search by dish, cuisine, or a broad intent like brunch.
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] border border-leaf/10 bg-paper p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-leaf/70">
+                Area
+              </p>
+              <p className="mt-2 text-lg font-semibold text-ink">
+                {location || "Choose where to search"}
+              </p>
+              <p className="mt-1 text-sm text-leaf/75">
+                Use the map picker for precise distance-based sorting.
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] border border-leaf/10 bg-paper p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-leaf/70">
+                Active filters
+              </p>
+              <p className="mt-2 text-lg font-semibold text-ink">
+                {activeFilterCount > 0 ? `${activeFilterCount} selected` : "Optional"}
+              </p>
+              <p className="mt-1 text-sm text-leaf/75">
+                Category, rating, price, distance, and open-now all feed the
+                same search request.
+              </p>
+            </div>
+          </div>
         ) : null}
+
+        <div className="mt-5 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)_auto]">
+          <label
+            className={`rounded-[1.55rem] border bg-paper px-4 py-3 transition focus-within:border-leaf ${
+              error ? "border-amber" : "border-leaf/10"
+            }`}
+          >
+            <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-leaf/70">
+              Meal or cuisine
+            </span>
+            <div className="mt-2 flex items-center gap-3">
+              <SearchIcon />
+              <input
+                type="text"
+                name="q"
+                value={query}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="Pizza, sushi, burgers, brunch..."
+                maxLength={SEARCH_QUERY_MAX_LENGTH}
+                autoComplete="off"
+                enterKeyHint="search"
+                aria-invalid={Boolean(error || formError)}
+                aria-describedby={error || formError ? errorTextId : helpTextId}
+                className="w-full bg-transparent text-base text-ink outline-none placeholder:text-leaf/60"
+              />
+            </div>
+          </label>
+
+          <label className="rounded-[1.55rem] border border-leaf/10 bg-paper px-4 py-3 transition focus-within:border-leaf">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-leaf/70">
+              Search area
+            </span>
+            <div className="mt-2 flex items-center gap-3">
+              <LocationIcon />
+              <input
+                type="text"
+                name="location"
+                value={location}
+                onChange={handleLocationChange}
+                onBlur={handleLocationBlur}
+                placeholder="Dubai, UAE"
+                maxLength={LOCATION_MAX_LENGTH}
+                autoComplete="off"
+                aria-invalid={Boolean(formError)}
+                aria-describedby={formError ? errorTextId : helpTextId}
+                className="w-full bg-transparent text-base text-ink outline-none placeholder:text-leaf/60"
+              />
+            </div>
+          </label>
+
+          <button
+            type="submit"
+            className="flex min-h-[4.75rem] min-w-[11rem] flex-col items-center justify-center rounded-[1.55rem] bg-leaf px-7 text-center transition hover:bg-ink disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="text-base font-semibold text-paper">Find meals</span>
+            <span className="mt-1 text-xs font-medium uppercase tracking-[0.22em] text-paper">
+              Search now
+            </span>
+          </button>
+        </div>
+
+        <div
+          className={`mt-4 flex flex-col gap-3 ${
+            compact ? "" : "xl:flex-row xl:items-start xl:justify-between"
+          }`}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setIsFiltersOpen(false);
+                setIsLocationPickerOpen(true);
+              }}
+              aria-label="Open location picker"
+              className="rounded-full border border-leaf/15 bg-paper px-4 py-2.5 text-sm font-medium text-leaf transition hover:border-leaf hover:bg-sand"
+            >
+              Choose location
+            </button>
+            <div ref={filtersDropdownRef} className="relative">
+              <button
+                type="button"
+                aria-label="Open advanced filters"
+                aria-expanded={isFiltersOpen}
+                aria-controls="search-filters-dropdown"
+                onClick={() => setIsFiltersOpen((current) => !current)}
+                className="inline-flex items-center gap-2 rounded-full border border-leaf/15 bg-paper px-4 py-2.5 text-sm font-medium text-leaf transition hover:border-leaf hover:bg-sand"
+              >
+                <span>Filters</span>
+                {activeFilterCount > 0 ? (
+                  <span className="rounded-full bg-leaf px-2 py-0.5 text-xs font-semibold text-paper">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </button>
+
+              {isFiltersOpen ? (
+                <div
+                  id="search-filters-dropdown"
+                  className="absolute left-0 top-[calc(100%+0.75rem)] z-20 w-[min(100vw-2rem,56rem)]"
+                >
+                  <SearchFiltersDropdown
+                    category={category}
+                    sort={sort}
+                    radiusKm={radiusKm}
+                    minRating={minRating}
+                    priceLevels={priceLevels}
+                    openNow={openNow}
+                    hasCoordinates={hasCoordinates}
+                    activeFilterCount={activeFilterCount}
+                    onCategoryChange={setCategory}
+                    onSortChange={setSort}
+                    onRadiusChange={setRadiusKm}
+                    onMinRatingChange={setMinRating}
+                    onTogglePriceLevel={togglePriceLevel}
+                    onOpenNowChange={setOpenNow}
+                    onReset={resetFilters}
+                  />
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-leaf/10 bg-paper px-4 py-3 xl:min-w-[19rem] xl:max-w-[24rem]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-leaf/70">
+              Search status
+            </p>
+            <p className="mt-2 text-sm font-medium text-ink">
+              {mapSelection
+                ? `Map pin ready for ${mapSelection.address}`
+                : location
+                  ? `Searching near ${location}`
+                  : "Add a location before searching"}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-leaf/75">
+              {hasCoordinates
+                ? "Distance sort and radius filters can use your selected coordinates."
+                : "A typed area works for search, but map selection makes distance filters more precise."}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className={`mt-4 grid gap-3 ${
+            compact ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]" : "lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
+          }`}
+        >
+          <div className="rounded-[1.5rem] border border-leaf/10 bg-paper px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-leaf/70">
+              Input rules
+            </p>
+            <p id={helpTextId} className="mt-2 text-xs leading-5 text-leaf/75">
+              Up to {SEARCH_QUERY_MAX_LENGTH} characters. Allowed: letters,
+              numbers, spaces, and &apos; &amp; . , ( ) / -
+            </p>
+            {error ? (
+              <p
+                id={errorTextId}
+                role="alert"
+                className="mt-2 text-xs font-medium text-amber"
+              >
+                {error}
+              </p>
+            ) : formError ? (
+              <p
+                id={errorTextId}
+                role="alert"
+                className="mt-2 text-xs font-medium text-amber"
+              >
+                {formError}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="rounded-[1.5rem] border border-leaf/10 bg-paper px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-leaf/70">
+                Active filters
+              </p>
+              <span className="text-xs font-medium text-leaf/70">
+                Sort: {sortLabel}
+              </span>
+            </div>
+            {selectedFilterLabels.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedFilterLabels.map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-leaf/10 bg-sand px-3 py-1.5 text-xs font-medium text-leaf"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-xs leading-5 text-leaf/75">
+                No advanced filters yet. Use the Filters dropdown only when you
+                need a tighter shortlist.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {isLocationPickerOpen ? (

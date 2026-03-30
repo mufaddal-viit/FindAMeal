@@ -1,11 +1,15 @@
 import axios from "axios";
 import { normalizeLocationInput } from "@/lib/locationQuery";
 import { normalizeSearchQuery, validateSearchQuery } from "@/lib/searchQuery";
-import type { PlaceListFilters, PlaceResponse, PlacesResponse } from "@/types/place";
+import type {
+  PlaceListFilters,
+  PlaceResponse,
+  PlacesResponse,
+} from "@/types/place";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api",
-  timeout: 20000
+  timeout: 40000,
 });
 
 function buildPlacesPayload(filters: PlaceListFilters) {
@@ -69,10 +73,13 @@ function buildPlacesPayload(filters: PlaceListFilters) {
   return payload;
 }
 
-export async function fetchPlaces(filters: PlaceListFilters = {}, signal?: AbortSignal) {
+export async function fetchPlaces(
+  filters: PlaceListFilters = {},
+  signal?: AbortSignal,
+) {
   const payload = buildPlacesPayload(filters);
   const response = await api.post<PlacesResponse>("/places", payload, {
-    signal
+    signal,
   });
 
   return response.data;
@@ -80,7 +87,7 @@ export async function fetchPlaces(filters: PlaceListFilters = {}, signal?: Abort
 
 export async function fetchPlace(id: string, signal?: AbortSignal) {
   const response = await api.get<PlaceResponse>(`/places/${id}`, {
-    signal
+    signal,
   });
 
   return response.data;

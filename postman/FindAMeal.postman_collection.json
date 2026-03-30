@@ -1,0 +1,188 @@
+{
+  "info": {
+    "name": "FindAMeal API",
+    "_postman_id": "72e03c66-29a7-4b31-9d24-9c6d2381f0e4",
+    "description": "Import this collection into Postman to test the FindAMeal backend. The search requests store the first returned place id into the collection variable aiPlaceId, which the final detail request uses.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api",
+      "type": "string"
+    },
+    {
+      "key": "aiPlaceId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Basic health check for the API."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Health status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Search Places - Basic",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"ramen\",\n  \"location\": \"Dubai, UAE\",\n  \"sort\": \"rating\",\n  \"page\": 1,\n  \"pageSize\": 10\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/places",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "places"
+          ]
+        },
+        "description": "Minimal valid search payload. Stores the first returned id into aiPlaceId."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Basic search status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Basic search returns a data array', function () {",
+              "  pm.expect(Array.isArray(json.data)).to.eql(true);",
+              "});",
+              "",
+              "if (Array.isArray(json.data) && json.data[0] && json.data[0].id) {",
+              "  pm.collectionVariables.set('aiPlaceId', json.data[0].id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Search Places - Advanced Filters",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"seafood\",\n  \"location\": \"Dubai Marina, Dubai, UAE\",\n  \"category\": \"Seafood\",\n  \"lat\": 25.0800,\n  \"lng\": 55.1400,\n  \"radiusKm\": 5,\n  \"minRating\": 4,\n  \"priceLevels\": [\"$$\", \"$$$\"],\n  \"openNow\": true,\n  \"sort\": \"distance\",\n  \"page\": 1,\n  \"pageSize\": 10\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/places",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "places"
+          ]
+        },
+        "description": "Exercise the full backend filter contract. Stores the first returned id into aiPlaceId."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Advanced search status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Advanced search returns metadata', function () {",
+              "  pm.expect(json.meta).to.be.an('object');",
+              "});",
+              "",
+              "if (Array.isArray(json.data) && json.data[0] && json.data[0].id) {",
+              "  pm.collectionVariables.set('aiPlaceId', json.data[0].id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Get Place By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/places/{{aiPlaceId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "places",
+            "{{aiPlaceId}}"
+          ]
+        },
+        "description": "Run one of the search requests first so aiPlaceId is populated."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Place detail status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Place detail returns a place object', function () {",
+              "  pm.expect(json.data).to.be.an('object');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ]
+}

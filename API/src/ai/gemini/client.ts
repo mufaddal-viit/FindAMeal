@@ -35,7 +35,6 @@ export function getGeminiGenerateConfig() {
     temperature: AI_CONFIG.model.temperature,
     topP: AI_CONFIG.model.topP,
     maxOutputTokens: AI_CONFIG.model.maxOutputTokens,
-    responseMimeType: "application/json",
     tools: [{ googleSearch: {} }]
   };
 }
