@@ -3,6 +3,7 @@ import PageHeader from "@/components/PageHeader";
 import PlaceCard from "@/components/PlaceCard";
 import SearchForm from "@/components/SearchForm";
 import StarterFlowCard from "@/components/StarterFlowCard";
+import ThemeToggle from "@/components/ThemeToggle";
 import type { Place } from "@/types/place";
 
 const searchHighlights = [
@@ -102,7 +103,12 @@ const featuredPlaces: Place[] = [
 export default function HomePage() {
   return (
     <main className="space-y-14 lg:space-y-16">
-      <section className="relative overflow-hidden rounded-[2.75rem] border border-leaf/10 bg-gradient-to-br from-sand via-amber/55 to-paper px-6 py-8 shadow-2xl shadow-leaf/10 lg:px-8 lg:py-10 xl:px-10">
+      {/* Theme Toggle - Floating in top right */}
+      <div className="fixed right-4 top-6 z-50">
+        <ThemeToggle />
+      </div>
+
+      <section className="relative overflow-hidden rounded-[2.75rem] border border-leaf/10 bg-gradient-to-br from-sand via-amber/55 to-paper px-6 py-8 shadow-2xl shadow-leaf/10 dark:border-slate-700 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 lg:px-8 lg:py-10 xl:px-10">
         <div className="absolute inset-x-0 top-0 h-28 bg-leaf/8" />
         <div className="absolute -left-16 top-24 h-52 w-52 rounded-full bg-amber/25 blur-3xl" />
         <div className="absolute bottom-8 right-8 h-56 w-56 rounded-full bg-leaf/10 blur-3xl" />
@@ -204,14 +210,14 @@ export default function HomePage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)]">
-        <div className="rounded-[2rem] border border-leaf/10 bg-paper p-6 shadow-lg shadow-leaf/10">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-leaf">
+        <div className="rounded-[2rem] border border-leaf/10 bg-paper p-6 shadow-lg shadow-leaf/10 dark:border-slate-700 dark:bg-slate-800 dark:shadow-slate-900/30">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-leaf dark:text-emerald-400">
             Quick starts
           </p>
-          <h2 className="mt-3 text-3xl font-semibold text-ink">
+          <h2 className="mt-3 text-3xl font-semibold text-ink dark:text-slate-100">
             Test the flow with a real search direction.
           </h2>
-          <p className="mt-3 text-base leading-7 text-leaf/80">
+          <p className="mt-3 text-base leading-7 text-leaf/80 dark:text-slate-400">
             Each of these opens the live results view with a useful starting
             point. They are meant to show how the location-first search feels
             in practice.
@@ -222,7 +228,7 @@ export default function HomePage() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="rounded-[1.4rem] border border-leaf/10 bg-sand px-4 py-4 text-sm font-semibold text-ink transition hover:border-leaf hover:bg-amber/25"
+                className="rounded-[1.4rem] border border-leaf/10 bg-sand px-4 py-4 text-sm font-semibold text-ink transition hover:border-leaf hover:bg-amber/25 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:border-emerald-500 dark:hover:bg-slate-600"
               >
                 {item.label}
               </Link>
@@ -233,20 +239,20 @@ export default function HomePage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-leaf">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-leaf dark:text-emerald-400">
                 Featured
               </p>
-              <h2 className="mt-2 text-3xl font-semibold text-ink">
+              <h2 className="mt-2 text-3xl font-semibold text-ink dark:text-slate-100">
                 Starter places
               </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-leaf/75">
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-leaf/75 dark:text-slate-400">
                 Sample cards to show the shape of the shortlist before your own
                 searches take over.
               </p>
             </div>
             <Link
               href="/results?q=restaurants&location=Dubai%2C%20UAE"
-              className="rounded-full border border-leaf/10 bg-paper px-4 py-2 text-sm font-semibold text-leaf transition hover:border-leaf hover:text-ink"
+              className="rounded-full border border-leaf/10 bg-paper px-4 py-2 text-sm font-semibold text-leaf transition hover:border-leaf hover:text-ink dark:border-slate-600 dark:bg-slate-800 dark:text-emerald-400 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
             >
               Browse all
             </Link>

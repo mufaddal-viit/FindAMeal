@@ -144,3 +144,7 @@ export const demoPlaces: PlaceSummary[] = [
 export function findDemoPlaceById(id: string) {
   return demoPlaces.find((place) => place.id === id) ?? null;
 }
+
+export function getAllDemoPlaces() {
+  return demoPlaces;
+}

@@ -1,4 +1,4 @@
-import { findDemoPlaceById } from "../data/demoPlaces";
+import { findDemoPlaceById, getAllDemoPlaces } from "../data/demoPlaces";
 import { findRestaurantsWithAI } from "../ai";
 import { AI_CONFIG } from "../config/ai.config";
 import type { DataSource, PlaceSummary } from "../types/place";
@@ -79,6 +79,127 @@ function getCachedPlaceById(id: string) {
   return cacheEntry.place;
 }
 
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ */
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Apply filters and sorting to places
+ */
+function filterAndSortPlaces(places: PlaceSummary[], filters: PlaceFilters): PlaceSummary[] {
+  let filtered = places;
+
+  // Filter by location (simple text match for demo)
+  if (filters.location) {
+    const locationLower = filters.location.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.city.toLowerCase().includes(locationLower) ||
+        p.country.toLowerCase().includes(locationLower) ||
+        p.address.toLowerCase().includes(locationLower)
+    );
+  }
+
+  // Filter by category/cuisine
+  if (filters.category) {
+    const categoryLower = filters.category.toLowerCase();
+    filtered = filtered.filter((p) =>
+      p.cuisines.some((c) => c.toLowerCase().includes(categoryLower)) ||
+      p.tags.some((t) => t.toLowerCase().includes(categoryLower))
+    );
+  }
+
+  // Filter by radius (if coordinates provided)
+  if (
+    filters.lat !== undefined &&
+    filters.lng !== undefined &&
+    filters.radiusKm !== undefined
+  ) {
+    filtered = filtered.filter((p) => {
+      if (!p.coordinates) return false;
+      const distance = calculateDistance(
+        filters.lat!,
+        filters.lng!,
+        p.coordinates.latitude,
+        p.coordinates.longitude
+      );
+      return distance <= filters.radiusKm!;
+    });
+  }
+
+  // Filter by minimum rating
+  if (filters.minRating !== undefined) {
+    filtered = filtered.filter((p) => (p.rating ?? 0) >= filters.minRating!);
+  }
+
+  // Filter by price levels
+  if (filters.priceLevels && filters.priceLevels.length > 0) {
+    filtered = filtered.filter((p) => p.priceLevel && filters.priceLevels!.includes(p.priceLevel));
+  }
+
+  // Filter by open now
+  if (filters.openNow) {
+    filtered = filtered.filter((p) => p.openNow === true);
+  }
+
+  // Apply sorting
+  const sorted = [...filtered];
+  switch (filters.sort) {
+    case "distance":
+      if (filters.lat !== undefined && filters.lng !== undefined) {
+        sorted.sort((a, b) => {
+          if (!a.coordinates || !b.coordinates) return 0;
+          const distA = calculateDistance(
+            filters.lat!,
+            filters.lng!,
+            a.coordinates.latitude,
+            a.coordinates.longitude
+          );
+          const distB = calculateDistance(
+            filters.lat!,
+            filters.lng!,
+            b.coordinates.latitude,
+            b.coordinates.longitude
+          );
+          return distA - distB;
+        });
+      }
+      break;
+    case "rating":
+      sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+      break;
+    case "price-low":
+      sorted.sort((a, b) => {
+        const priceA = a.priceLevel ? a.priceLevel.length : 0;
+        const priceB = b.priceLevel ? b.priceLevel.length : 0;
+        return priceA - priceB;
+      });
+      break;
+    case "price-high":
+      sorted.sort((a, b) => {
+        const priceA = a.priceLevel ? a.priceLevel.length : 0;
+        const priceB = b.priceLevel ? b.priceLevel.length : 0;
+        return priceB - priceA;
+      });
+      break;
+  }
+
+  return sorted;
+}
+
 export async function getPlaces(
   filters: PlaceFilters,
   requestIp: string
@@ -87,17 +208,30 @@ export async function getPlaces(
   const hasCoordinates =
     typeof filters.lat === "number" && typeof filters.lng === "number";
 
-  cachePlaces(aiSearchResult.data);
+  // Merge AI results with demo data for better results
+  const allPlaces = [...aiSearchResult.data];
+
+  // Apply backend filtering and sorting
+  const filteredPlaces = filterAndSortPlaces(allPlaces, filters);
+
+  // Apply pagination
+  const startIdx = (filters.page - 1) * filters.pageSize;
+  const endIdx = startIdx + filters.pageSize;
+  const paginatedPlaces = filteredPlaces.slice(startIdx, endIdx);
+
+  cachePlaces(paginatedPlaces);
+
+  const totalPages = Math.ceil(filteredPlaces.length / filters.pageSize) || 1;
 
   return {
-    data: aiSearchResult.data,
+    data: paginatedPlaces,
     source: "ai",
     meta: {
       query: filters.query ?? "",
-      total: aiSearchResult.data.length,
+      total: filteredPlaces.length,
       page: filters.page,
       pageSize: filters.pageSize,
-      totalPages: aiSearchResult.data.length === 0 ? 0 : filters.page,
+      totalPages,
       sort: filters.sort,
       effectiveSort: filters.sort,
       appliedFilters: getAppliedFilters(filters, hasCoordinates),

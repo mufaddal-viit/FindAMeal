@@ -7,18 +7,50 @@ html {
 
 body {
   min-height: 100vh;
-  @apply bg-leaf text-ink;
-  font-family: "Trebuchet MS", "Avenir Next", "Segoe UI Variable", sans-serif;
+  @apply bg-sand text-ink;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: Georgia, "Times New Roman", serif;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 ::selection {
   @apply bg-leaf/20 text-ink;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(31, 93, 82, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(31, 93, 82, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(31, 93, 82, 0.5);
+}
+
+/* Button focus states */
+button:focus-visible {
+  @apply outline-none ring-2 ring-leaf/50 ring-offset-2;
+}
+
+/* Input focus states */
+input:focus-visible,
+textarea:focus-visible {
+  @apply outline-none ring-2 ring-leaf/50 ring-offset-2;
 }
